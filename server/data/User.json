@@ -1,0 +1,50 @@
+[
+  {
+    "$__": {
+      "activePaths": {
+        "paths": {
+          "region": "modify",
+          "password": "modify",
+          "email": "modify",
+          "name": "modify",
+          "plan": "modify",
+          "startupIdea": "default",
+          "category": "default",
+          "timeOnPlatform": "default",
+          "_id": "default",
+          "createdAt": "default"
+        },
+        "states": {
+          "require": {},
+          "default": {
+            "startupIdea": true,
+            "category": true,
+            "timeOnPlatform": true,
+            "_id": true,
+            "createdAt": true
+          },
+          "modify": {
+            "name": true,
+            "email": true,
+            "password": true,
+            "region": true,
+            "plan": true
+          }
+        }
+      }
+    },
+    "_doc": {
+      "name": "Ditsa Bakshi",
+      "email": "bakshiditsa@gmail.com",
+      "password": "$2a$10$czMEl2wMGodqxnkSxXuxAeiuc1TBgOIB3N.pWhwYT7LlGjF3smDPC",
+      "region": "US",
+      "plan": "free",
+      "startupIdea": "",
+      "category": "",
+      "timeOnPlatform": 0,
+      "_id": "6a228af8539e31ce654ffcfc",
+      "createdAt": "2026-06-05T08:38:16.884Z"
+    },
+    "_id": "6a228af8539e31ce654ffcfd"
+  }
+]
