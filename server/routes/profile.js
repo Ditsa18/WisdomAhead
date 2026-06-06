@@ -8,7 +8,7 @@ const router = express.Router();
 // Update Startup Idea & Category
 router.put('/', auth, async (req, res) => {
   try {
-    const { startupIdea, category } = req.body;
+    const { startupIdea, category, profileImage } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
