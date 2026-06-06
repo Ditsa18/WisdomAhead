@@ -20,6 +20,11 @@ const Documents = () => {
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [completedCount, setCompletedCount] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchDocumentsData = async () => {
@@ -66,7 +71,6 @@ const Documents = () => {
     let y = 47;
     const pageHeight = doc.internal.pageSize.height;
 
-    // Output answer keys
     mod.deliverableSchema.forEach((schema) => {
       const answerVal = mod.deliverableAnswers?.[schema.fieldKey] || "No answer provided.";
 
@@ -87,7 +91,7 @@ const Documents = () => {
       doc.setTextColor(20, 20, 30);
       const splitAns = doc.splitTextToSize(answerVal, 160);
       doc.text(splitAns, 22, y);
-      y += (splitAns.length * 5) + 8; // Spacing between questions
+      y += (splitAns.length * 5) + 8;
     });
 
     doc.save(`module_${mod.moduleId}_${mod.title.toLowerCase().replace(/\s+/g, '_')}.pdf`);
@@ -97,7 +101,6 @@ const Documents = () => {
   const downloadModuleWord = async (mod) => {
     const tableRows = [];
 
-    // Table Header
     tableRows.push(
       new TableRow({
         children: [
@@ -115,7 +118,6 @@ const Documents = () => {
       })
     );
 
-    // Populate rows
     mod.deliverableSchema.forEach((schema) => {
       const answerVal = mod.deliverableAnswers?.[schema.fieldKey] || "No response provided.";
       tableRows.push(
@@ -147,7 +149,7 @@ const Documents = () => {
               new TextRun({ text: `Module ${mod.moduleId} | Track: ${mod.trackName} | Founder: ${user.name}`, italics: true }),
             ]
           }),
-          new Paragraph({ text: "" }), // Spacing
+          new Paragraph({ text: "" }),
           new Table({
             width: { size: 100, type: WidthType.PERCENTAGE },
             borders: {
@@ -178,7 +180,6 @@ const Documents = () => {
 
     const sections = [];
 
-    // Header paragraph
     const titleParagraph = new Paragraph({
       children: [
         new TextRun({ text: "MINDLAUNCH STARTUP BRIEF", bold: true, size: 40, color: "0F0F1A" })
@@ -208,7 +209,6 @@ const Documents = () => {
       spaceParagraph
     ];
 
-    // Add a table for each completed module
     completedModules.forEach((mod) => {
       docElements.push(
         new Paragraph({
@@ -287,7 +287,6 @@ const Documents = () => {
 
   // Generate PDF Brief wrapper
   const downloadBriefPDF = () => {
-    // Collect all completed modules
     const completedModules = modules.filter(m => m.status === 'completed');
     if (completedModules.length === 0) return;
 
@@ -357,135 +356,448 @@ const Documents = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <p>Loading document registry...</p>
-      </div>
+      <>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+          body { font-family: 'Plus Jakarta Sans', sans-serif; background: #04040C; color: #F0EFF8; }
+          .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; gap: 1rem; }
+          .loading-spinner { width: 48px; height: 48px; border: 3px solid rgba(123, 92, 245, 0.2); border-top-color: #7B5CF5; border-radius: 50%; animation: spin 1s linear infinite; }
+          @keyframes spin { to { transform: rotate(360deg); } }
+          .loading-text { color: #8B8AA8; font-size: 0.95rem; }
+        `}</style>
+        <div className="loading-container">
+          <div className="loading-spinner" />
+          <p className="loading-text">Loading document registry...</p>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="page-shell page-wrap">
-      
-      {/* Header */}
-      <div>
-        <h1 style={{ fontSize: '2.25rem', fontWeight: 800 }}>Document Hub</h1>
-        <p>Download individual module worksheets or your aggregated startup briefing document.</p>
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #04040C; color: #F0EFF8; min-height: 100vh; }
+        
+        .floating-particles {
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          z-index: 0;
+          overflow: hidden;
+        }
 
-      {/* Top Card: Compile Startup Brief */}
-      <div className="card highlight-card" style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1.25rem'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <div className="badge badge-purple" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.5rem' }}>
-              <Sparkles size={12} /> Aggregate Dossier
+        .particle {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: rgba(123, 92, 245, 0.3);
+          border-radius: 50%;
+          animation: floatParticle 15s infinite linear;
+        }
+
+        .particle:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; animation-duration: 18s; }
+        .particle:nth-child(2) { left: 20%; top: 60%; animation-delay: 2s; animation-duration: 20s; }
+        .particle:nth-child(3) { left: 30%; top: 40%; animation-delay: 4s; animation-duration: 22s; }
+        .particle:nth-child(4) { left: 40%; top: 80%; animation-delay: 6s; animation-duration: 16s; }
+        .particle:nth-child(5) { left: 50%; top: 10%; animation-delay: 8s; animation-duration: 24s; }
+        .particle:nth-child(6) { left: 60%; top: 70%; animation-delay: 10s; animation-duration: 19s; }
+        .particle:nth-child(7) { left: 70%; top: 30%; animation-delay: 12s; animation-duration: 21s; }
+        .particle:nth-child(8) { left: 80%; top: 50%; animation-delay: 14s; animation-duration: 17s; }
+        .particle:nth-child(9) { left: 90%; top: 90%; animation-delay: 16s; animation-duration: 23s; }
+        .particle:nth-child(10) { left: 15%; top: 85%; animation-delay: 18s; animation-duration: 25s; }
+        .particle:nth-child(11) { left: 25%; top: 15%; animation-delay: 20s; animation-duration: 20s; background: rgba(245, 166, 35, 0.2); }
+        .particle:nth-child(12) { left: 35%; top: 55%; animation-delay: 22s; animation-duration: 18s; background: rgba(245, 166, 35, 0.2); }
+        .particle:nth-child(13) { left: 45%; top: 25%; animation-delay: 24s; animation-duration: 22s; background: rgba(245, 166, 35, 0.2); }
+        .particle:nth-child(14) { left: 55%; top: 75%; animation-delay: 26s; animation-duration: 19s; background: rgba(245, 166, 35, 0.2); }
+        .particle:nth-child(15) { left: 65%; top: 45%; animation-delay: 28s; animation-duration: 21s; background: rgba(245, 166, 35, 0.2); }
+
+        @keyframes floatParticle {
+          0% {
+            transform: translateY(100vh) translateX(0) scale(0);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+            transform: translateY(80vh) translateX(20px) scale(1);
+          }
+          90% {
+            opacity: 1;
+            transform: translateY(10vh) translateX(-20px) scale(1);
+          }
+          100% {
+            transform: translateY(-10vh) translateX(0) scale(0);
+            opacity: 0;
+          }
+        }
+
+        .documents-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 2rem;
+          animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .page-header { margin-bottom: 2rem; }
+        
+        .page-title {
+          font-family: 'Outfit', sans-serif;
+          font-size: 2.25rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          background: linear-gradient(135deg, #F0EFF8, #9D7DFF);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        .page-subtitle {
+          font-size: 1rem;
+          color: #8B8AA8;
+          line-height: 1.6;
+        }
+        
+        .card {
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 20px;
+          padding: 1.5rem;
+          margin-bottom: 1.5rem;
+          transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .card:hover {
+          border-color: rgba(123, 92, 245, 0.3);
+          transform: translateY(-4px);
+          box-shadow: 0 20px 40px rgba(123, 92, 245, 0.1);
+        }
+        
+        .highlight-card {
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+          border: 2px solid rgba(245, 166, 35, 0.3);
+          background: rgba(26, 26, 46, 0.95);
+        }
+        
+        .highlight-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+        
+        .highlight-badge {
+          background: linear-gradient(135deg, #F5A623, #FFD166);
+          color: #04040C;
+          padding: 0.35rem 0.85rem;
+          border-radius: 8px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          margin-bottom: 0.5rem;
+        }
+        
+        .highlight-title {
+          font-family: 'Outfit', sans-serif;
+          font-size: 1.4rem;
+          font-weight: 700;
+          color: #F0EFF8;
+        }
+        
+        .highlight-desc {
+          font-size: 0.95rem;
+          color: #8B8AA8;
+          line-height: 1.6;
+          margin-top: 0.25rem;
+        }
+        
+        .button-group {
+          display: flex;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+        }
+        
+        .btn {
+          padding: 0.6rem 1.25rem;
+          border-radius: 10px;
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          transition: all 0.3s;
+          text-decoration: none;
+        }
+        
+        .btn-primary {
+          background: linear-gradient(135deg, #7B5CF5, #5B3CC5);
+          border: none;
+          color: #fff;
+          box-shadow: 0 4px 15px rgba(123, 92, 245, 0.3);
+        }
+        
+        .btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(123, 92, 245, 0.4);
+        }
+        
+        .btn-outline {
+          background: transparent;
+          border: 1px solid rgba(123, 92, 245, 0.4);
+          color: #9D7DFF;
+        }
+        
+        .btn-outline:hover {
+          background: rgba(123, 92, 245, 0.1);
+          border-color: #7B5CF5;
+        }
+        
+        .btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+          background: rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          color: #8B8AA8;
+        }
+        
+        .status-text {
+          font-size: 0.85rem;
+          color: #8B8AA8;
+        }
+        
+        .status-text strong { color: #F0EFF8; }
+        
+        .section-title {
+          font-family: 'Outfit', sans-serif;
+          font-size: 1.25rem;
+          font-weight: 700;
+          margin-bottom: 1rem;
+          color: #F0EFF8;
+        }
+        
+        .table-card {
+          padding: 0;
+          overflow: hidden;
+        }
+        
+        .table-wrapper {
+          overflow-x: auto;
+        }
+        
+        .modules-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 0.9rem;
+        }
+        
+        .modules-table th {
+          text-align: left;
+          padding: 1rem;
+          color: #8B8AA8;
+          font-weight: 600;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .modules-table td {
+          padding: 1rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        
+        .modules-table tr { transition: background 0.2s; }
+        .modules-table tr:hover { background: rgba(255, 255, 255, 0.02); }
+        
+        .module-name {
+          font-weight: 600;
+          color: #F0EFF8;
+        }
+        
+        .track-name {
+          color: #8B8AA8;
+        }
+        
+        .status-completed {
+          color: #06D6A0;
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-weight: 500;
+        }
+        
+        .status-locked {
+          color: #8B8AA8;
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+        
+        .download-actions {
+          display: flex;
+          gap: 0.5rem;
+          justify-content: flex-end;
+        }
+        
+        .download-btn {
+          padding: 0.35rem 0.75rem;
+          font-size: 0.75rem;
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+        
+        .no-downloads {
+          font-size: 0.8rem;
+          color: #8B8AA8;
+        }
+        
+        .row-locked { opacity: 0.6; }
+        
+        @media (max-width: 768px) {
+          .documents-container { padding: 1.5rem; }
+          .page-title { font-size: 1.75rem; }
+          .highlight-header { flex-direction: column; align-items: flex-start; }
+          .button-group { width: 100%; }
+          .btn { flex: 1; justify-content: center; }
+          .modules-table { font-size: 0.85rem; }
+          .modules-table th, .modules-table td { padding: 0.75rem 0.5rem; }
+          .download-actions { flex-direction: column; }
+        }
+      `}</style>
+      
+      <div className="floating-particles">
+        {[...Array(15)].map((_, i) => (
+          <div key={i} className="particle" />
+        ))}
+      </div>
+      
+      <div className="documents-container">
+        {/* Header */}
+        <div className="page-header">
+          <h1 className="page-title">Document Hub</h1>
+          <p className="page-subtitle">Download individual module worksheets or your aggregated startup briefing document.</p>
+        </div>
+
+        {/* Top Card: Compile Startup Brief */}
+        <div className="card highlight-card">
+          <div className="highlight-header">
+            <div>
+              <span className="highlight-badge">
+                <Sparkles size={12} /> Aggregate Dossier
+              </span>
+              <h2 className="highlight-title">Complete Startup Brief</h2>
+              <p className="highlight-desc">
+                Consolidates all answers from your completed modules into one unified plan for review by investors.
+              </p>
             </div>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>Complete Startup Brief</h2>
-            <p style={{ marginTop: '0.25rem' }}>
-              Consolidates all answers from your completed modules into one unified plan for review by investors.
-            </p>
+            
+            <div className="button-group">
+              {completedCount > 0 ? (
+                <>
+                  <button onClick={downloadBriefPDF} className="btn btn-outline">
+                    <FileDown size={16} /> Download PDF
+                  </button>
+                  <button onClick={downloadBriefWord} className="btn btn-primary">
+                    <FileDown size={16} /> Download Word (DOCX)
+                  </button>
+                </>
+              ) : (
+                <button className="btn" disabled>
+                  <Lock size={16} /> Complete Modules to Download
+                </button>
+              )}
+            </div>
           </div>
           
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }} className="button-group">
-            {completedCount > 0 ? (
-              <>
-                <button onClick={downloadBriefPDF} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <FileDown size={16} /> Download PDF
-                </button>
-                <button onClick={downloadBriefWord} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <FileDown size={16} /> Download Word (DOCX)
-                </button>
-              </>
-            ) : (
-              <button className="btn btn-locked" disabled style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Lock size={16} /> Complete Modules to Download
-              </button>
-            )}
+          <div className="status-text">
+            Status: <strong>{completedCount}/30 Modules Completed</strong>
           </div>
         </div>
-        
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          Status: <strong>{completedCount}/30 Modules Completed</strong>
-        </div>
-      </div>
 
-      {/* Module Documents List */}
-      <div>
-        <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Module Worksheets</h3>
-        
-        <div className="card table-card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                  <th style={{ textAlign: 'left', padding: '1rem' }}>Module</th>
-                  <th style={{ textAlign: 'left', padding: '1rem' }}>Track</th>
-                  <th style={{ textAlign: 'left', padding: '1rem' }}>Status</th>
-                  <th style={{ textAlign: 'right', padding: '1rem' }}>Available Downloads</th>
-                </tr>
-              </thead>
-              <tbody>
-                {modules.map((mod) => {
-                  const isCompleted = mod.status === 'completed';
-                  return (
-                    <tr key={mod.moduleId} style={{
-                      borderBottom: '1px solid var(--border-subtle)',
-                      opacity: isCompleted ? 1 : 0.6
-                    }}>
-                      <td style={{ padding: '1rem', fontWeight: 600 }}>
-                        Module {mod.moduleId}: {mod.title}
-                      </td>
-                      <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>
-                        {mod.trackName}
-                      </td>
-                      <td style={{ padding: '1rem' }}>
-                        {isCompleted ? (
-                          <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 500 }}>
-                            <CheckCircle size={14} /> Completed
-                          </span>
-                        ) : (
-                          <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <Lock size={14} /> Locked / Incomplete
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ padding: '1rem', textAlign: 'right' }}>
-                        {isCompleted ? (
-                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <button
-                              onClick={() => downloadModulePDF(mod)}
-                              className="btn btn-outline"
-                              style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                            >
-                              <FileDown size={12} /> PDF
-                            </button>
-                            <button
-                              onClick={() => downloadModuleWord(mod)}
-                              className="btn btn-primary"
-                              style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                            >
-                              <FileDown size={12} /> Word
-                            </button>
-                          </div>
-                        ) : (
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            No deliverables
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        {/* Module Documents List */}
+        <div>
+          <h3 className="section-title">Module Worksheets</h3>
+          
+          <div className="card table-card">
+            <div className="table-wrapper">
+              <table className="modules-table">
+                <thead>
+                  <tr>
+                    <th>Module</th>
+                    <th>Track</th>
+                    <th>Status</th>
+                    <th>Available Downloads</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {modules.map((mod) => {
+                    const isCompleted = mod.status === 'completed';
+                    return (
+                      <tr key={mod.moduleId} className={!isCompleted ? 'row-locked' : ''}>
+                        <td className="module-name">
+                          Module {mod.moduleId}: {mod.title}
+                        </td>
+                        <td className="track-name">
+                          {mod.trackName}
+                        </td>
+                        <td>
+                          {isCompleted ? (
+                            <span className="status-completed">
+                              <CheckCircle size={14} /> Completed
+                            </span>
+                          ) : (
+                            <span className="status-locked">
+                              <Lock size={14} /> Locked / Incomplete
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          {isCompleted ? (
+                            <div className="download-actions">
+                              <button
+                                onClick={() => downloadModulePDF(mod)}
+                                className="btn btn-outline download-btn"
+                              >
+                                <FileDown size={12} /> PDF
+                              </button>
+                              <button
+                                onClick={() => downloadModuleWord(mod)}
+                                className="btn btn-primary download-btn"
+                              >
+                                <FileDown size={12} /> Word
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="no-downloads">
+                              No deliverables
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-
-    </div>
+    </>
   );
 };
 

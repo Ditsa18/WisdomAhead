@@ -17,6 +17,9 @@ import StartupBrief from './pages/StartupBrief';
 import Documents from './pages/Documents';
 import Profile from './pages/Profile';
 import Subscription from './pages/Subscription';
+import SegmentDeepDive from './pages/SegmentDeepDive';
+import AdminDashboard from './pages/AdminDashboard';
+import VCNetwork from './pages/VCNetwork';
 
 // Layout for authenticated routes
 const AuthenticatedLayout = () => {
@@ -50,6 +53,7 @@ function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/segment/:segment" element={<SegmentDeepDive />} />
 
       {/* Onboarding Route (requires login but not onboarded state) */}
       <Route
@@ -75,6 +79,8 @@ function App() {
         <Route path="/documents" element={<Documents />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/subscription" element={<Subscription />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/vc-network" element={<VCNetwork />} />
       </Route>
 
       {/* Fallback route */}

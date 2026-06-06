@@ -17,6 +17,7 @@ const Profile = () => {
   const [updating, setUpdating] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [mounted, setMounted] = useState(false);
 
   const categories = [
     'Tech Startup',
@@ -30,6 +31,10 @@ const Profile = () => {
     'Services',
     'Other'
   ];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -105,217 +110,618 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <p>Loading Profile...</p>
-      </div>
+      <>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+          body { font-family: 'Plus Jakarta Sans', sans-serif; background: #04040C; color: #F0EFF8; }
+          .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; gap: 1rem; }
+          .loading-spinner { width: 48px; height: 48px; border: 3px solid rgba(123, 92, 245, 0.2); border-top-color: #7B5CF5; border-radius: 50%; animation: spin 1s linear infinite; }
+          @keyframes spin { to { transform: rotate(360deg); } }
+          .loading-text { color: #8B8AA8; font-size: 0.95rem; }
+        `}</style>
+        <div className="loading-container">
+          <div className="loading-spinner" />
+          <p className="loading-text">Loading Profile...</p>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="page-shell page-wrap">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #04040C; color: #F0EFF8; min-height: 100vh; }
+        
+        .floating-particles {
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          z-index: 0;
+          overflow: hidden;
+        }
+
+        .particle {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: rgba(123, 92, 245, 0.3);
+          border-radius: 50%;
+          animation: floatParticle 15s infinite linear;
+        }
+
+        .particle:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; animation-duration: 18s; }
+        .particle:nth-child(2) { left: 20%; top: 60%; animation-delay: 2s; animation-duration: 20s; }
+        .particle:nth-child(3) { left: 30%; top: 40%; animation-delay: 4s; animation-duration: 22s; }
+        .particle:nth-child(4) { left: 40%; top: 80%; animation-delay: 6s; animation-duration: 16s; }
+        .particle:nth-child(5) { left: 50%; top: 10%; animation-delay: 8s; animation-duration: 24s; }
+        .particle:nth-child(6) { left: 60%; top: 70%; animation-delay: 10s; animation-duration: 19s; }
+        .particle:nth-child(7) { left: 70%; top: 30%; animation-delay: 12s; animation-duration: 21s; }
+        .particle:nth-child(8) { left: 80%; top: 50%; animation-delay: 14s; animation-duration: 17s; }
+        .particle:nth-child(9) { left: 90%; top: 90%; animation-delay: 16s; animation-duration: 23s; }
+        .particle:nth-child(10) { left: 15%; top: 85%; animation-delay: 18s; animation-duration: 25s; }
+        .particle:nth-child(11) { left: 25%; top: 15%; animation-delay: 20s; animation-duration: 20s; background: rgba(245, 166, 35, 0.2); }
+        .particle:nth-child(12) { left: 35%; top: 55%; animation-delay: 22s; animation-duration: 18s; background: rgba(245, 166, 35, 0.2); }
+        .particle:nth-child(13) { left: 45%; top: 25%; animation-delay: 24s; animation-duration: 22s; background: rgba(245, 166, 35, 0.2); }
+        .particle:nth-child(14) { left: 55%; top: 75%; animation-delay: 26s; animation-duration: 19s; background: rgba(245, 166, 35, 0.2); }
+        .particle:nth-child(15) { left: 65%; top: 45%; animation-delay: 28s; animation-duration: 21s; background: rgba(245, 166, 35, 0.2); }
+
+        @keyframes floatParticle {
+          0% {
+            transform: translateY(100vh) translateX(0) scale(0);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+            transform: translateY(80vh) translateX(20px) scale(1);
+          }
+          90% {
+            opacity: 1;
+            transform: translateY(10vh) translateX(-20px) scale(1);
+          }
+          100% {
+            transform: translateY(-10vh) translateX(0) scale(0);
+            opacity: 0;
+          }
+        }
+
+        .profile-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 2rem;
+          animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .page-header { margin-bottom: 2.5rem; }
+        
+        .page-title {
+          font-family: 'Outfit', sans-serif;
+          font-size: 2.25rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          background: linear-gradient(135deg, #F0EFF8, #9D7DFF);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        .page-subtitle {
+          font-size: 1rem;
+          color: #8B8AA8;
+          line-height: 1.6;
+        }
+        
+        .alert {
+          padding: 1rem 1.25rem;
+          border-radius: 12px;
+          font-size: 0.875rem;
+          margin-bottom: 1.5rem;
+          animation: slideDown 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .alert-success {
+          background: rgba(6, 214, 160, 0.1);
+          border: 1px solid rgba(6, 214, 160, 0.3);
+          color: #06D6A0;
+        }
+        
+        .alert-error {
+          background: rgba(255, 107, 107, 0.1);
+          border: 1px solid rgba(255, 107, 107, 0.3);
+          color: #FF6B6B;
+        }
+        
+        .card {
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 20px;
+          padding: 1.75rem;
+          transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .card:hover {
+          border-color: rgba(123, 92, 245, 0.3);
+          transform: translateY(-4px);
+          box-shadow: 0 20px 40px rgba(123, 92, 245, 0.1);
+        }
+        
+        .user-header {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          margin-bottom: 2.5rem;
+          flex-wrap: wrap;
+        }
+        
+        .profile-avatar {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          overflow: hidden;
+          background: linear-gradient(135deg, #7B5CF5, #5B3CC5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          box-shadow: 0 0 30px rgba(123, 92, 245, 0.4);
+        }
+        
+        .profile-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        
+        .profile-avatar span {
+          font-family: 'Outfit', sans-serif;
+          font-size: 1.75rem;
+          font-weight: 800;
+          color: #fff;
+        }
+        
+        .user-info { flex: 1; min-width: 0; }
+        
+        .user-name {
+          font-family: 'Outfit', sans-serif;
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+        }
+        
+        .user-meta {
+          display: flex;
+          gap: 0.75rem;
+          align-items: center;
+          flex-wrap: wrap;
+          font-size: 0.9rem;
+          color: #8B8AA8;
+          margin-bottom: 0.75rem;
+        }
+        
+        .user-meta strong { color: #F0EFF8; }
+        
+        .user-meta-dot {
+          width: 4px;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 50%;
+        }
+        
+        .user-actions {
+          display: flex;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+        
+        .badge {
+          padding: 0.35rem 0.85rem;
+          border-radius: 8px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+        
+        .badge-premium {
+          background: linear-gradient(135deg, #F5A623, #FFD166);
+          color: #04040C;
+        }
+        
+        .badge-free {
+          background: rgba(123, 92, 245, 0.15);
+          border: 1px solid rgba(123, 92, 245, 0.3);
+          color: #9D7DFF;
+        }
+        
+        .btn-outline {
+          background: transparent;
+          border: 1px solid rgba(123, 92, 245, 0.4);
+          border-radius: 10px;
+          padding: 0.5rem 1rem;
+          color: #9D7DFF;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 0.85rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s;
+        }
+        
+        .btn-outline:hover {
+          background: rgba(123, 92, 245, 0.1);
+          border-color: #7B5CF5;
+        }
+        
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1.5rem;
+          margin-bottom: 2.5rem;
+        }
+        
+        .stat-card {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        
+        .stat-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .stat-icon.violet { background: rgba(123, 92, 245, 0.15); color: #7B5CF5; }
+        .stat-icon.gold { background: rgba(245, 166, 35, 0.15); color: #F5A623; }
+        .stat-icon.emerald { background: rgba(6, 214, 160, 0.15); color: #06D6A0; }
+        
+        .stat-info { flex: 1; }
+        
+        .stat-label {
+          font-size: 0.75rem;
+          color: #8B8AA8;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: 0.25rem;
+        }
+        
+        .stat-value {
+          font-family: 'Outfit', sans-serif;
+          font-size: 1.5rem;
+          font-weight: 800;
+        }
+        
+        .section-header {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .section-title {
+          font-family: 'Outfit', sans-serif;
+          font-size: 1.25rem;
+          font-weight: 700;
+        }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        
+        .form-label {
+          display: block;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #F0EFF8;
+          margin-bottom: 0.5rem;
+        }
+        
+        .form-input,
+        .form-select,
+        .form-textarea {
+          width: 100%;
+          padding: 0.875rem 1rem;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          color: #F0EFF8;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 0.95rem;
+          transition: all 0.3s;
+        }
+        
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+          color: #5A5872;
+        }
+        
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+          outline: none;
+          border-color: #7B5CF5;
+          background: rgba(123, 92, 245, 0.08);
+          box-shadow: 0 0 0 4px rgba(123, 92, 245, 0.1);
+        }
+        
+        .form-select option {
+          background: #04040C;
+          color: #F0EFF8;
+        }
+        
+        .form-textarea {
+          min-height: 140px;
+          resize: vertical;
+          line-height: 1.6;
+        }
+        
+        .btn-primary {
+          background: linear-gradient(135deg, #7B5CF5, #5B3CC5);
+          border: none;
+          border-radius: 10px;
+          padding: 0.75rem 1.5rem;
+          color: #fff;
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          transition: all 0.3s;
+          box-shadow: 0 4px 15px rgba(123, 92, 245, 0.3);
+        }
+        
+        .btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(123, 92, 245, 0.4);
+        }
+        
+        .btn-primary:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+        
+        .deliverables-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        
+        .deliverable-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem 1.25rem;
+          background: rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          color: #F0EFF8;
+          text-decoration: none;
+          font-size: 0.9rem;
+          font-weight: 500;
+          transition: all 0.3s;
+        }
+        
+        .deliverable-item:hover {
+          border-color: rgba(123, 92, 245, 0.4);
+          background: rgba(123, 92, 245, 0.05);
+          transform: translateX(4px);
+        }
+        
+        .deliverable-item span:last-child {
+          color: #7B5CF5;
+          font-size: 0.85rem;
+        }
+        
+        .empty-state {
+          font-style: italic;
+          font-size: 0.9rem;
+          color: #8B8AA8;
+          padding: 1.5rem;
+          text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+          .profile-container { padding: 1.5rem; }
+          .user-header { flex-direction: column; text-align: center; }
+          .user-meta { justify-content: center; }
+          .user-actions { justify-content: center; }
+          .stats-grid { grid-template-columns: 1fr; }
+          .page-title { font-size: 1.75rem; }
+        }
+      `}</style>
       
-      {/* Header */}
-      <div>
-        <h1 style={{ fontSize: '2.25rem', fontWeight: 800 }}>My Profile</h1>
-        <p>Manage your account settings, startup details, and review your progress metrics.</p>
+      <div className="floating-particles">
+        {[...Array(15)].map((_, i) => (
+          <div key={i} className="particle" />
+        ))}
       </div>
-
-      {/* Success/Error Alerts */}
-      {successMsg && (
-        <div style={{ backgroundColor: 'rgba(76, 175, 80, 0.15)', border: '1px solid rgba(76, 175, 80, 0.4)', borderRadius: '8px', padding: '1rem', color: 'var(--success)', fontSize: '0.9rem' }}>
-          {successMsg}
-        </div>
-      )}
-      {errorMsg && (
-        <div style={{ backgroundColor: 'rgba(255, 107, 107, 0.15)', border: '1px solid rgba(255, 107, 107, 0.4)', borderRadius: '8px', padding: '1rem', color: '#FF6B6B', fontSize: '0.9rem' }}>
-          {errorMsg}
-        </div>
-      )}
-
-      {/* User Header Details */}
-      <div className="card split-row" style={{ alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-        <div style={{
-          flex: '0 0 auto',
-          width: '48px',
-          minWidth: '48px',
-          height: '48px',
-          minHeight: '48px',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          backgroundColor: 'var(--accent-primary)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          fontWeight: 'bold',
-          fontSize: '1.1rem',
-          lineHeight: '1'
-        }}>
-          {profileImagePreview ? (
-            <img
-              src={profileImagePreview}
-              alt="Profile"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          ) : (
-            <span style={{ color: '#FFFFFF' }}>{user?.name?.charAt(0).toUpperCase()}</span>
-          )}
+      
+      <div className="profile-container">
+        {/* Header */}
+        <div className="page-header">
+          <h1 className="page-title">My Profile</h1>
+          <p className="page-subtitle">Manage your account settings, startup details, and review your progress metrics.</p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: 0 }}>
-          <h2 style={{ fontSize: '1.5rem', margin: 0 }}>{user?.name}</h2>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{user?.email}</span>
-            <span style={{ width: '4px', height: '4px', backgroundColor: 'var(--border-subtle)', borderRadius: '50%' }} />
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Region: <strong>{user?.region}</strong></span>
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            {user?.plan === 'premium' ? (
-              <span className="badge badge-amber" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                <Sparkles size={12} /> Premium Membership
-              </span>
-            ) : (
-              <span className="badge badge-purple">
-                Free Account
-              </span>
-            )}
-            <button
-              type="button"
-              className="btn btn-outline"
-              style={{ padding: '0.4rem 0.85rem', minHeight: 'auto' }}
-              onClick={openFilePicker}
-            >
-              Change photo
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={handleSelectedImage}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Progress Dashboard */}
-      <div className="content-grid columns-3" style={{ gap: '1.5rem' }}>
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ color: 'var(--accent-primary)' }}><Award size={28} /></div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Modules Completed</div>
-            <div style={{ fontSize: '1.35rem', fontWeight: 800 }}>{stats?.completedCount || 0}/30</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ color: 'var(--accent-secondary)' }}><Compass size={28} /></div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Active Module</div>
-            <div style={{ fontSize: '1.35rem', fontWeight: 800 }}>Module {stats?.currentModule || 1}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ color: 'var(--success)' }}><Calendar size={28} /></div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Time on Platform</div>
-            <div style={{ fontSize: '1.35rem', fontWeight: 800 }}>{stats?.timeOnPlatform || '0m'}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Edit Startup Profile */}
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
-          <Target size={20} style={{ color: 'var(--accent-primary)' }} />
-          <h3 style={{ fontSize: '1.25rem', margin: 0 }}>Startup Profile</h3>
-        </div>
-        
-        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div className="form-group">
-            <label htmlFor="profile-category">Business Category</label>
-            <select
-              id="profile-category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              style={{ width: '100%' }}
-              required
-            >
-              <option value="" disabled>Select business category</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="profile-idea">Startup Concept / Pitch Brief</label>
-            <textarea
-              id="profile-idea"
-              value={startupIdea}
-              onChange={(e) => setStartupIdea(e.target.value)}
-              style={{ height: '140px', resize: 'vertical', lineHeight: 1.5 }}
-              placeholder="Describe your startup idea..."
-              required
-            />
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-              disabled={updating}
-            >
-              <Save size={16} /> {updating ? 'Saving changes...' : 'Save Profile Changes'}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Completed Deliverables List */}
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
-          Completed Deliverables
-        </h3>
-        
-        {completedModules.length === 0 ? (
-          <p style={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            No deliverables completed yet. Go to Modules to start validation.
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {completedModules.map((mod) => (
-              <Link
-                key={mod.moduleId}
-                to={`/modules/${mod.moduleId}`}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  backgroundColor: 'var(--bg-deep)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '8px',
-                  color: '#FFFFFF',
-                  textDecoration: 'none',
-                  fontSize: '0.9rem',
-                  fontWeight: 500,
-                  transition: 'border-color 0.15s ease'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--accent-primary)'}
-                onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
-              >
-                <span>Module {mod.moduleId}: {mod.title}</span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary)' }}>Review →</span>
-              </Link>
-            ))}
+        {/* Success/Error Alerts */}
+        {successMsg && (
+          <div className="alert alert-success">
+            {successMsg}
           </div>
         )}
-      </div>
+        {errorMsg && (
+          <div className="alert alert-error">
+            {errorMsg}
+          </div>
+        )}
 
-    </div>
+        {/* User Header Details */}
+        <div className="card user-header">
+          <div className="profile-avatar">
+            {profileImagePreview ? (
+              <img src={profileImagePreview} alt="Profile" />
+            ) : (
+              <span>{user?.name?.charAt(0).toUpperCase()}</span>
+            )}
+          </div>
+
+          <div className="user-info">
+            <h2 className="user-name">{user?.name}</h2>
+            <div className="user-meta">
+              <span>{user?.email}</span>
+              <span className="user-meta-dot" />
+              <span>Region: <strong>{user?.region}</strong></span>
+            </div>
+            <div className="user-actions">
+              {user?.plan === 'premium' ? (
+                <span className="badge badge-premium">
+                  <Sparkles size={12} /> Premium Membership
+                </span>
+              ) : (
+                <span className="badge badge-free">
+                  Free Account
+                </span>
+              )}
+              <button type="button" className="btn-outline" onClick={openFilePicker}>
+                Change photo
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleSelectedImage}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Dashboard */}
+        <div className="stats-grid">
+          <div className="card stat-card">
+            <div className="stat-icon violet">
+              <Award size={24} />
+            </div>
+            <div className="stat-info">
+              <div className="stat-label">Modules Completed</div>
+              <div className="stat-value">{stats?.completedCount || 0}/30</div>
+            </div>
+          </div>
+
+          <div className="card stat-card">
+            <div className="stat-icon gold">
+              <Compass size={24} />
+            </div>
+            <div className="stat-info">
+              <div className="stat-label">Active Module</div>
+              <div className="stat-value">Module {stats?.currentModule || 1}</div>
+            </div>
+          </div>
+
+          <div className="card stat-card">
+            <div className="stat-icon emerald">
+              <Calendar size={24} />
+            </div>
+            <div className="stat-info">
+              <div className="stat-label">Time on Platform</div>
+              <div className="stat-value">{stats?.timeOnPlatform || '0m'}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Edit Startup Profile */}
+        <div className="card" style={{ marginBottom: '2.5rem' }}>
+          <div className="section-header">
+            <Target size={20} style={{ color: '#7B5CF5' }} />
+            <h3 className="section-title">Startup Profile</h3>
+          </div>
+          
+          <form onSubmit={handleSave}>
+            <div className="form-group">
+              <label htmlFor="profile-category" className="form-label">Business Category</label>
+              <select
+                id="profile-category"
+                className="form-select"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select business category</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="profile-idea" className="form-label">Startup Concept / Pitch Brief</label>
+              <textarea
+                id="profile-idea"
+                className="form-textarea"
+                value={startupIdea}
+                onChange={(e) => setStartupIdea(e.target.value)}
+                placeholder="Describe your startup idea..."
+                required
+              />
+            </div>
+
+            <div>
+              <button type="submit" className="btn-primary" disabled={updating}>
+                <Save size={16} /> {updating ? 'Saving changes...' : 'Save Profile Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Completed Deliverables List */}
+        <div className="card">
+          <div className="section-header">
+            <Award size={20} style={{ color: '#06D6A0' }} />
+            <h3 className="section-title">Completed Deliverables</h3>
+          </div>
+          
+          {completedModules.length === 0 ? (
+            <p className="empty-state">
+              No deliverables completed yet. Go to Modules to start validation.
+            </p>
+          ) : (
+            <div className="deliverables-list">
+              {completedModules.map((mod) => (
+                <Link
+                  key={mod.moduleId}
+                  to={`/modules/${mod.moduleId}`}
+                  className="deliverable-item"
+                >
+                  <span>Module {mod.moduleId}: {mod.title}</span>
+                  <span>Review →</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 };
 
