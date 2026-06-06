@@ -545,10 +545,38 @@ const CSS = `
     .hero-h1 { letter-spacing:-1.8px; }
     .steps-grid::after { display:none; }
     .cta-in { padding:2.5rem 1.75rem; }
-    .hero-strip { display:none; }
+    
     .hs-sep { display:none; }
     .hero-stats { gap:1.5rem; }
   }
+    @media (max-width: 760px) {
+  .cta-acts {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .cta-acts .b-gold,
+  .cta-acts .b-out {
+    width: 100%;
+    justify-content: center;
+  }
+}
+  @media (max-width: 760px) {
+  .cta-in {
+    padding: 2rem 1rem;
+  }
+
+  .cta-acts {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .cta-acts .b-gold,
+  .cta-acts .b-out {
+    width: 100%;
+    justify-content: center;
+  }
+}
 `;
 
 /* ─ micro SVG icons ─ */
