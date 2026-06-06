@@ -775,3 +775,14 @@ body::before {
     transform: translateY(0);
   }
 }
+.sidebar {
+  z-index: 99999 !important;
+}
+
+.sidebar * {
+  pointer-events: auto !important;
+}
+
+.sidebar-overlay {
+  display: none !important;
+}
