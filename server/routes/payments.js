@@ -37,7 +37,7 @@ router.post('/create-checkout', auth, async (req, res) => {
               name: 'MindLaunch Premium Membership',
               description: 'Unlock all 30 modules, Pitch Coach Feedback reports, and startup document downloads.'
             },
-            unit_amount: 99900, // ₹999.00 INR
+            unit_amount: 249900, // ₹2,499.00 INR (yearly)
             recurring: {
               interval: 'year'
             }

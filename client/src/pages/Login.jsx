@@ -30,18 +30,11 @@ const Login = () => {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: 'var(--bg-deep)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem'
-    }}>
-      <div className="card" style={{ width: '100%', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="auth-page page-shell">
+      <div className="card auth-card">
         
         {/* Header */}
-        <div style={{ textAlign: 'center' }}>
+        <div className="auth-header" style={{ textAlign: 'center' }}>
           <div style={{
             backgroundColor: 'var(--accent-primary)',
             color: '#FFFFFF',
@@ -102,8 +95,8 @@ const Login = () => {
 
           <button
             type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem' }}
+            className="btn btn-primary btn-full"
+            style={{ marginTop: '0.5rem' }}
             disabled={loading}
           >
             {loading ? 'Signing in...' : 'Sign In'}

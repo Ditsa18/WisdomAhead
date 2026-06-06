@@ -112,7 +112,7 @@ const ModuleDetail = () => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+    <div className="page-shell page-wrap">
       
       {/* Back link */}
       <div>
@@ -122,14 +122,9 @@ const ModuleDetail = () => {
       </div>
 
       {/* Module Title & Meta */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
+      <div className="split-row" style={{
         borderBottom: '1px solid var(--border-subtle)',
-        paddingBottom: '1.25rem',
-        flexWrap: 'wrap',
-        gap: '1rem'
+        paddingBottom: '1.25rem'
       }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
@@ -297,7 +292,7 @@ const ModuleDetail = () => {
             </div>
           ))}
 
-          <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '1.25rem', marginTop: '0.5rem' }}>
+          <div className="form-actions" style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '1.25rem', marginTop: '0.5rem' }}>
             <button
               type="submit"
               className="btn btn-secondary"

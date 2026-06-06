@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
 
@@ -19,10 +20,23 @@ import Subscription from './pages/Subscription';
 
 // Layout for authenticated routes
 const AuthenticatedLayout = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
-    <div className="app-container">
-      <Sidebar />
+    <div className={`app-container ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+
       <main className="main-content">
+        <button
+          type="button"
+          className="mobile-sidebar-toggle"
+          onClick={() => setSidebarOpen((prev) => !prev)}
+          aria-label="Toggle sidebar"
+        >
+          <Menu size={18} />
+        </button>
         <Outlet />
       </main>
     </div>

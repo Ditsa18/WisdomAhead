@@ -135,10 +135,10 @@ const StartupBrief = () => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '900px', margin: '0 auto' }}>
+    <div className="page-shell page-wrap">
       
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="split-row responsive-header" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 style={{ fontSize: '2.25rem', fontWeight: 800 }}>My Startup Brief</h1>
           <p>This aggregates all your completed deliverables into a singular business profile.</p>
@@ -218,8 +218,8 @@ const StartupBrief = () => {
                 </span>
               </div>
               
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+              <div className="responsive-table">
+                <table style={{ borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                       <th style={{ textAlign: 'left', padding: '0.5rem 1rem 0.5rem 0', color: 'var(--text-secondary)', width: '35%' }}>Deliverable Field</th>

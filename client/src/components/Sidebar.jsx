@@ -10,10 +10,11 @@ import {
   User,
   CreditCard,
   LogOut,
-  Sparkles
+  Sparkles,
+  X
 } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -25,28 +26,15 @@ const Sidebar = () => {
   if (!user) return null;
 
   return (
-    <aside style={{
-      width: 'var(--sidebar-width)',
-      height: '100vh',
-      backgroundColor: 'var(--bg-sidebar)',
-      borderRight: '1px solid var(--border-subtle)',
-      position: 'fixed',
-      left: 0,
-      top: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      zIndex: 100
-    }}>
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+      {onClose && (
+        <button type="button" className="sidebar-close-btn" onClick={onClose} aria-label="Close menu">
+          <X size={18} />
+        </button>
+      )}
       {/* Brand Logo */}
-      <div style={{
-        padding: '2rem 1.5rem',
-        borderBottom: '1px solid var(--border-subtle)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem'
-      }}>
-        <div style={{
-          backgroundColor: 'var(--accent-primary)',
+      <div className="sidebar-brand">
+        <div className="brand-mark" style={{
           color: '#FFFFFF',
           width: '32px',
           height: '32px',
@@ -69,13 +57,7 @@ const Sidebar = () => {
       </div>
 
       {/* User Mini Profile */}
-      <div style={{
-        padding: '1.25rem 1.5rem',
-        borderBottom: '1px solid var(--border-subtle)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.5rem'
-      }}>
+      <div className="sidebar-profile">
         <div style={{ fontWeight: 600, fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {user.name}
         </div>
@@ -93,15 +75,10 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation Links */}
-      <nav style={{
-        flex: 1,
-        padding: '1.5rem 0.75rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.25rem'
-      }}>
+      <nav>
         <NavLink
           to="/dashboard"
+          onClick={onClose}
           className={({ isActive }) => `btn btn-outline ${isActive ? 'nav-link-active' : ''}`}
           style={{ justifyContent: 'flex-start', border: 'none', padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}
         >
@@ -111,6 +88,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/modules"
+          onClick={onClose}
           className={({ isActive }) => `btn btn-outline ${isActive ? 'nav-link-active' : ''}`}
           style={{ justifyContent: 'flex-start', border: 'none', padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}
         >
@@ -120,6 +98,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/pitch-coach"
+          onClick={onClose}
           className={({ isActive }) => `btn btn-outline ${isActive ? 'nav-link-active' : ''}`}
           style={{ justifyContent: 'flex-start', border: 'none', padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}
         >
@@ -129,6 +108,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/startup-brief"
+          onClick={onClose}
           className={({ isActive }) => `btn btn-outline ${isActive ? 'nav-link-active' : ''}`}
           style={{ justifyContent: 'flex-start', border: 'none', padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}
         >
@@ -138,6 +118,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/documents"
+          onClick={onClose}
           className={({ isActive }) => `btn btn-outline ${isActive ? 'nav-link-active' : ''}`}
           style={{ justifyContent: 'flex-start', border: 'none', padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}
         >
@@ -147,6 +128,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/profile"
+          onClick={onClose}
           className={({ isActive }) => `btn btn-outline ${isActive ? 'nav-link-active' : ''}`}
           style={{ justifyContent: 'flex-start', border: 'none', padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}
         >
@@ -156,6 +138,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/subscription"
+          onClick={onClose}
           className={({ isActive }) => `btn btn-outline ${isActive ? 'nav-link-active' : ''}`}
           style={{ justifyContent: 'flex-start', border: 'none', padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}
         >
@@ -167,7 +150,7 @@ const Sidebar = () => {
       {/* Logout Button */}
       <div style={{
         padding: '1rem 0.75rem',
-        borderTop: '1px solid var(--border-subtle)'
+        borderTop: '1px solid rgba(255,255,255,0.06)'
       }}>
         <button
           onClick={handleLogout}

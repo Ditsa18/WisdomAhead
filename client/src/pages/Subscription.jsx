@@ -77,8 +77,8 @@ const Subscription = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+    <div className="page-shell page-wrap">
+      <div className="split-row responsive-header" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 style={{ fontSize: '2.4rem', fontWeight: 800 }}>Premium Startup Access</h1>
           <p style={{ maxWidth: '680px', color: 'var(--text-secondary)' }}>
@@ -115,7 +115,7 @@ const Subscription = () => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+      <div className="content-grid columns-2" style={{ gap: '1.5rem' }}>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Sparkles size={20} style={{ color: 'var(--accent-secondary)' }} />
@@ -148,11 +148,11 @@ const Subscription = () => {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1 }}>₹999</span>
+              <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1 }}>₹2,499</span>
               <span style={{ color: 'var(--text-secondary)' }}>/ year</span>
             </div>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-              ₹99 <span style={{ fontWeight: 500 }}>/ month</span>
+              ₹399 <span style={{ fontWeight: 500 }}>/ month (Save 48%)</span>
             </div>
           </div>
 
@@ -199,7 +199,7 @@ const Subscription = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+      <div className="content-grid columns-2" style={{ gap: '1.25rem' }}>
         <div className="card" style={{ padding: '1.5rem' }}>
           <h3 style={{ fontSize: '1.1rem' }}>Why upgrade?</h3>
           <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: '0.9rem', marginTop: '1rem' }}>

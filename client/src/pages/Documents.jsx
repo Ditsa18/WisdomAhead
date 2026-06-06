@@ -364,7 +364,7 @@ const Documents = () => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '900px', margin: '0 auto' }}>
+    <div className="page-shell page-wrap">
       
       {/* Header */}
       <div>
@@ -373,12 +373,10 @@ const Documents = () => {
       </div>
 
       {/* Top Card: Compile Startup Brief */}
-      <div className="card" style={{
-        border: '2px solid var(--accent-primary)',
+      <div className="card highlight-card" style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '1.25rem',
-        backgroundColor: 'rgba(108, 99, 255, 0.05)'
+        gap: '1.25rem'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
@@ -391,7 +389,7 @@ const Documents = () => {
             </p>
           </div>
           
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }} className="button-group">
             {completedCount > 0 ? (
               <>
                 <button onClick={downloadBriefPDF} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -418,7 +416,7 @@ const Documents = () => {
       <div>
         <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Module Worksheets</h3>
         
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="card table-card" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
               <thead>

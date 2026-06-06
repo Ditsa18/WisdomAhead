@@ -62,7 +62,7 @@ const Dashboard = () => {
   const track1Modules = modules.filter(m => m.track === 1);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div className="page-shell">
       
       {/* Premium Upgrade Banner */}
       {user?.plan !== 'premium' && (
@@ -91,23 +91,21 @@ const Dashboard = () => {
             </p>
           </div>
           <Link to="/subscription" className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-            Upgrade for ₹999/year or ₹99/month <ArrowRight size={14} style={{ marginLeft: '0.25rem' }} />
+            Upgrade: ₹399/month or ₹2,499/year <ArrowRight size={14} style={{ marginLeft: '0.25rem' }} />
           </Link>
         </div>
       )}
 
       {/* Welcome Header */}
-      <div>
-        <h1 style={{ fontSize: '2.25rem', fontWeight: 800 }}>Welcome back, {user?.name}!</h1>
-        <p>Build, test, and prepare your startup pitch for launch.</p>
+      <div className="page-header">
+        <div>
+          <h1 className="section-title">Welcome back, {user?.name}!</h1>
+          <p className="section-copy">Build, test, and prepare your startup pitch for launch.</p>
+        </div>
       </div>
 
       {/* Grid: Startup Idea & Stats */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '1.5rem'
-      }}>
+<div className="content-grid columns-2">
         
         {/* Startup Idea Card */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

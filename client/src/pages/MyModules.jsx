@@ -45,12 +45,14 @@ const MyModules = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+    <div className="page-shell">
       
       {/* Header */}
-      <div>
-        <h1 style={{ fontSize: '2.25rem', fontWeight: 800 }}>Startup Curriculum</h1>
-        <p>Complete all 30 modules to construct a venture-grade investor startup brief.</p>
+      <div className="page-header">
+        <div>
+          <h1 className="section-title">Startup Curriculum</h1>
+          <p className="section-copy">Complete all 30 modules to construct a venture-grade investor startup brief.</p>
+        </div>
       </div>
 
       {/* Tracks Container */}

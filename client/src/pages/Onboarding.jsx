@@ -72,15 +72,8 @@ const Onboarding = () => {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: 'var(--bg-deep)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem'
-    }}>
-      <div className="card" style={{ width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '2rem', padding: '2.5rem' }}>
+    <div className="page-shell page-wrap" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-deep)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <div className="auth-card" style={{ width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '2rem', padding: '2.5rem' }}>
         
         {/* Step Indicator */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -137,12 +130,7 @@ const Onboarding = () => {
             </div>
             <p>Pick the category that best describes your startup venture. This aligns templates with industry practices.</p>
             
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-              gap: '0.75rem',
-              marginTop: '0.5rem'
-            }}>
+            <div className="content-grid columns-2" style={{ marginTop: '0.5rem', gap: '0.75rem' }}>
               {categories.map((cat) => {
                 const isSelected = category === cat;
                 return (
@@ -206,8 +194,7 @@ const Onboarding = () => {
         )}
 
         {/* Control Buttons */}
-        <div style={{
-          display: 'flex',
+        <div className="form-actions" style={{
           justifyContent: 'space-between',
           borderTop: '1px solid var(--border-subtle)',
           paddingTop: '1.5rem',

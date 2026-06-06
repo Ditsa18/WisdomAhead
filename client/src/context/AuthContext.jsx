@@ -86,15 +86,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Update startup idea & category (Onboarding & Profile)
-  const updateStartupProfile = async (startupIdea, category) => {
+  const updateStartupProfile = async (startupIdea, category, profileImage) => {
     if (!token) throw new Error('Not authenticated');
+    const body = { startupIdea, category };
+    if (profileImage !== undefined) body.profileImage = profileImage;
     const res = await fetch(`${API_URL}/profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ startupIdea, category })
+      body: JSON.stringify(body)
     });
     const data = await res.json();
     if (!res.ok) {
@@ -104,7 +106,8 @@ export const AuthProvider = ({ children }) => {
     setUser(prev => ({
       ...prev,
       startupIdea: data.user.startupIdea,
-      category: data.user.category
+      category: data.user.category,
+      profileImage: data.user.profileImage
     }));
     return data.user;
   };

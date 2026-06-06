@@ -15,6 +15,7 @@ router.put('/', auth, async (req, res) => {
 
     if (startupIdea !== undefined) user.startupIdea = startupIdea;
     if (category !== undefined) user.category = category;
+    if (profileImage !== undefined) user.profileImage = profileImage;
 
     await user.save();
 
@@ -27,7 +28,8 @@ router.put('/', auth, async (req, res) => {
         region: user.region,
         plan: user.plan,
         startupIdea: user.startupIdea,
-        category: user.category
+        category: user.category,
+        profileImage: user.profileImage
       }
     });
   } catch (error) {

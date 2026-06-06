@@ -52,7 +52,8 @@ router.post('/register', async (req, res) => {
         region: savedUser.region,
         plan: savedUser.plan,
         startupIdea: savedUser.startupIdea,
-        category: savedUser.category
+        category: savedUser.category,
+        profileImage: savedUser.profileImage
       }
     });
   } catch (error) {
@@ -94,7 +95,8 @@ router.post('/login', async (req, res) => {
         region: user.region,
         plan: user.plan,
         startupIdea: user.startupIdea,
-        category: user.category
+        category: user.category,
+        profileImage: user.profileImage
       }
     });
   } catch (error) {

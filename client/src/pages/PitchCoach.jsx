@@ -239,7 +239,7 @@ const PitchCoach = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '900px', margin: '0 auto' }}>
+    <div className="page-shell page-wrap">
       
       {/* Header */}
       <div>
@@ -358,9 +358,7 @@ const PitchCoach = () => {
       )}
 
       {/* Chat Messages Frame */}
-      <div className="card" style={{
-        display: 'flex',
-        flexDirection: 'column',
+      <div className="card chat-card" style={{
         height: '500px',
         padding: 0,
         overflow: 'hidden'
@@ -407,7 +405,7 @@ const PitchCoach = () => {
                   maxWidth: '75%',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.25rem'
+                  gap: '0.5rem'
                 }}
               >
                 {/* bubble */}
@@ -422,10 +420,27 @@ const PitchCoach = () => {
                   fontWeight: isUser ? 500 : 400,
                   fontSize: '0.95rem',
                   lineHeight: 1.5,
-                  whiteSpace: 'pre-wrap'
+                  whiteSpace: 'pre-wrap',
+                  position: 'relative'
                 }}>
                   {displayContent}
                 </div>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-icon"
+                  onClick={() => speakText(displayContent)}
+                  style={{
+                    alignSelf: isUser ? 'flex-end' : 'flex-start',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.45rem 0.75rem',
+                    fontSize: '0.78rem'
+                  }}
+                >
+                  <Volume2 size={14} />
+                  Listen
+                </button>
                 
                 {/* timestamp */}
                 <span style={{
@@ -457,24 +472,8 @@ const PitchCoach = () => {
         </div>
 
         {/* Input box */}
-        <form onSubmit={handleSend} style={{
-          display: 'flex',
-          flexDirection: 'column',
-          borderTop: '1px solid var(--border-subtle)',
-          padding: '1rem',
-          backgroundColor: 'rgba(0,0,0,0.1)',
-          gap: '0.75rem'
-        }}>
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <button
-              type="button"
-              onClick={toggleRecording}
-              className={recording ? 'btn btn-secondary' : 'btn btn-outline'}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1rem', borderRadius: '8px' }}
-            >
-              <Mic size={16} />
-              {recording ? 'Stop recording' : 'Record voice'}
-            </button>
+        <form onSubmit={handleSend} className="chat-input-pane">
+          <div className="button-row" style={{ alignItems: 'center' }}>
             <button
               type="button"
               onClick={playLastAssistantReply}
@@ -486,13 +485,22 @@ const PitchCoach = () => {
               Replay response
             </button>
             <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-              {recognitionSupported ? 'Speak your pitch and the coach will transcribe it automatically.' : 'Voice recording is not supported in this browser.'}
+              {recognitionSupported ? 'Tap the mic while typing to record your voice.' : 'Voice recording is not supported in this browser.'}
             </span>
           </div>
           {recordError && (
             <div style={{ color: '#FF6B6B', fontSize: '0.85rem' }}>{recordError}</div>
           )}
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div className="chat-input-row">
+            <button
+              type="button"
+              onClick={toggleRecording}
+              className={recording ? 'btn btn-secondary' : 'btn btn-outline'}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 0.95rem', borderRadius: '8px' }}
+            >
+              <Mic size={16} />
+              {recording ? 'Stop' : 'Record'}
+            </button>
             <input
               type="text"
               value={input}
@@ -500,6 +508,7 @@ const PitchCoach = () => {
               placeholder="Type your message or pitch details here..."
               style={{
                 flex: 1,
+                minWidth: 0,
                 border: 'none',
                 backgroundColor: 'transparent',
                 padding: '0.75rem',

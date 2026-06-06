@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { User, Sparkles, Target, Compass, Award, Calendar, Save } from 'lucide-react';
 
 const Profile = () => {
   const { user, token, updateStartupProfile } = useAuth();
-  
+  const fileInputRef = useRef(null);
+
   const [startupIdea, setStartupIdea] = useState(user?.startupIdea || '');
   const [category, setCategory] = useState(user?.category || '');
+  const [profileImage, setProfileImage] = useState(user?.profileImage || '');
+  const [profileImagePreview, setProfileImagePreview] = useState(user?.profileImage || '');
   const [modules, setModules] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,6 +30,15 @@ const Profile = () => {
     'Services',
     'Other'
   ];
+
+  useEffect(() => {
+    if (user) {
+      setStartupIdea(user.startupIdea || '');
+      setCategory(user.category || '');
+      setProfileImage(user.profileImage || '');
+      setProfileImagePreview(user.profileImage || '');
+    }
+  }, [user]);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -57,14 +69,30 @@ const Profile = () => {
     }
   }, [token]);
 
+  const handleSelectedImage = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileImage(reader.result);
+      setProfileImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setUpdating(true);
     setSuccessMsg('');
     setErrorMsg('');
     try {
-      await updateStartupProfile(startupIdea, category);
-      setSuccessMsg('Startup profile updated successfully!');
+      await updateStartupProfile(startupIdea, category, profileImage);
+      setSuccessMsg('Profile updated successfully!');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       setErrorMsg(err.message || 'Failed to save changes. Please try again.');
@@ -84,7 +112,7 @@ const Profile = () => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+    <div className="page-shell page-wrap">
       
       {/* Header */}
       <div>
@@ -105,30 +133,43 @@ const Profile = () => {
       )}
 
       {/* User Header Details */}
-      <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+      <div className="card split-row" style={{ alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
         <div style={{
-          backgroundColor: 'var(--accent-primary)',
-          color: '#FFFFFF',
-          width: '72px',
-          height: '72px',
+          flex: '0 0 auto',
+          width: '48px',
+          minWidth: '48px',
+          height: '48px',
+          minHeight: '48px',
           borderRadius: '50%',
+          overflow: 'hidden',
+          backgroundColor: 'var(--accent-primary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          textAlign: 'center',
           fontWeight: 'bold',
-          fontSize: '2rem'
+          fontSize: '1.1rem',
+          lineHeight: '1'
         }}>
-          {user?.name.charAt(0).toUpperCase()}
+          {profileImagePreview ? (
+            <img
+              src={profileImagePreview}
+              alt="Profile"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <span style={{ color: '#FFFFFF' }}>{user?.name?.charAt(0).toUpperCase()}</span>
+          )}
         </div>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: 0 }}>
           <h2 style={{ fontSize: '1.5rem', margin: 0 }}>{user?.name}</h2>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{user?.email}</span>
             <span style={{ width: '4px', height: '4px', backgroundColor: 'var(--border-subtle)', borderRadius: '50%' }} />
             <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Region: <strong>{user?.region}</strong></span>
           </div>
-          <div>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
             {user?.plan === 'premium' ? (
               <span className="badge badge-amber" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                 <Sparkles size={12} /> Premium Membership
@@ -138,16 +179,27 @@ const Profile = () => {
                 Free Account
               </span>
             )}
+            <button
+              type="button"
+              className="btn btn-outline"
+              style={{ padding: '0.4rem 0.85rem', minHeight: 'auto' }}
+              onClick={openFilePicker}
+            >
+              Change photo
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleSelectedImage}
+            />
           </div>
         </div>
       </div>
 
       {/* Progress Dashboard */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: '1.5rem'
-      }}>
+      <div className="content-grid columns-3" style={{ gap: '1.5rem' }}>
         <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ color: 'var(--accent-primary)' }}><Award size={28} /></div>
           <div>
