@@ -1,8 +1,596 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
-import { User, Sparkles, Target, Compass, Award, Calendar, Save } from 'lucide-react';
 
+/*
+  MindLaunch — Profile.jsx v2
+  ───────────────────────────
+  • Matches Documents + Dashboard theme exactly
+  • Three.js particle bg (CDN, no extra import)
+  • All SVG icons inline — zero emoji
+  • Stat cards with animated counters
+  • Profile card with hover glow effects
+  • Completed modules list with status chips
+  • Fully responsive
+*/
+
+/* ── Font injection ── */
+const injectFonts = () => {
+  if (document.getElementById('ml-fonts')) return;
+  const l = document.createElement('link');
+  l.id = 'ml-fonts';
+  l.rel = 'stylesheet';
+  l.href = '[fonts.googleapis.com](https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap)';
+  document.head.appendChild(l);
+};
+
+/* ── Three.js CDN ── */
+function loadThree() {
+  if (typeof window.THREE !== 'undefined') return Promise.resolve();
+  return new Promise((res) => {
+    const s = document.createElement('script');
+    s.src = '[cdnjs.cloudflare.com](https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js)';
+    s.onload = res;
+    document.head.appendChild(s);
+  });
+}
+
+function createBgParticles(canvas) {
+  const T = window.THREE;
+  const renderer = new T.WebGLRenderer({ canvas, alpha: true, antialias: false });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  renderer.setSize(innerWidth, innerHeight);
+  const scene = new T.Scene();
+  const cam = new T.PerspectiveCamera(65, innerWidth / innerHeight, 0.1, 200);
+  cam.position.z = 7;
+
+  const COUNT = 200;
+  const geo = new T.BufferGeometry();
+  const pos = new Float32Array(COUNT * 3);
+  const col = new Float32Array(COUNT * 3);
+  const vel = new Float32Array(COUNT);
+  for (let i = 0; i < COUNT; i++) {
+    pos[i * 3] = (Math.random() - 0.5) * 30;
+    pos[i * 3 + 1] = (Math.random() - 0.5) * 18;
+    pos[i * 3 + 2] = (Math.random() - 0.5) * 12;
+    vel[i] = 0.0005 + Math.random() * 0.001;
+    const t = Math.random();
+    if (t > 0.7) {
+      col[i * 3] = 0.48;
+      col[i * 3 + 1] = 0.36;
+      col[i * 3 + 2] = 0.96;
+    } else if (t > 0.45) {
+      col[i * 3] = 0.96;
+      col[i * 3 + 1] = 0.65;
+      col[i * 3 + 2] = 0.14;
+    } else if (t > 0.25) {
+      col[i * 3] = 0.02;
+      col[i * 3 + 1] = 0.84;
+      col[i * 3 + 2] = 0.63;
+    } else {
+      col[i * 3] = 1;
+      col[i * 3 + 1] = 0.42;
+      col[i * 3 + 2] = 0.62;
+    }
+  }
+  geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new T.BufferAttribute(col, 3));
+  const pts = new T.Points(
+    geo,
+    new T.PointsMaterial({
+      size: 0.026,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.4,
+      sizeAttenuation: true,
+    })
+  );
+  scene.add(pts);
+
+  const sG = new T.BufferGeometry();
+  const sP = new Float32Array(140 * 3);
+  for (let i = 0; i < 140; i++) {
+    sP[i * 3] = (Math.random() - 0.5) * 40;
+    sP[i * 3 + 1] = (Math.random() - 0.5) * 28;
+    sP[i * 3 + 2] = -10 - Math.random() * 8;
+  }
+  sG.setAttribute('position', new T.BufferAttribute(sP, 3));
+  scene.add(
+    new T.Points(
+      sG,
+      new T.PointsMaterial({
+        size: 0.012,
+        color: 0x6655cc,
+        transparent: true,
+        opacity: 0.22,
+      })
+    )
+  );
+
+  let mx = 0,
+    my = 0;
+  const onMM = (e) => {
+    mx = (e.clientX / innerWidth - 0.5) * 2;
+    my = -(e.clientY / innerHeight - 0.5) * 2;
+  };
+  const onR = () => {
+    renderer.setSize(innerWidth, innerHeight);
+    cam.aspect = innerWidth / innerHeight;
+    cam.updateProjectionMatrix();
+  };
+  window.addEventListener('mousemove', onMM, { passive: true });
+  window.addEventListener('resize', onR);
+  const clock = new T.Clock();
+  let raf;
+  const tick = () => {
+    raf = requestAnimationFrame(tick);
+    cam.position.x += (mx * 0.2 - cam.position.x) * 0.025;
+    cam.position.y += (my * 0.15 - cam.position.y) * 0.025;
+    pts.rotation.y = clock.getElapsedTime() * 0.01;
+    const pa = geo.attributes.position.array;
+    for (let i = 0; i < COUNT; i++) {
+      pa[i * 3 + 1] += vel[i];
+      if (pa[i * 3 + 1] > 9) pa[i * 3 + 1] = -9;
+    }
+    geo.attributes.position.needsUpdate = true;
+    renderer.render(scene, cam);
+  };
+  tick();
+  return () => {
+    cancelAnimationFrame(raf);
+    window.removeEventListener('mousemove', onMM);
+    window.removeEventListener('resize', onR);
+    renderer.dispose();
+  };
+}
+
+/* ══════════════ INLINE SVG ICONS ══════════════ */
+const Ic = ({ paths, size = 16, fill = 'none', stroke = 'currentColor', sw = 2 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={fill}
+    stroke={stroke}
+    strokeWidth={sw}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {(Array.isArray(paths) ? paths : [paths]).map((d, i) => (
+      <path key={i} d={d} />
+    ))}
+  </svg>
+);
+
+const Icons = {
+  User: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2',
+        'M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
+      ]}
+    />
+  ),
+  Sparkles: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      fill="currentColor"
+      stroke="none"
+      paths={[
+        'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+      ]}
+    />
+  ),
+  Target: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z',
+        'M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z',
+        'M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+      ]}
+    />
+  ),
+  Compass: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z',
+        'M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z',
+      ]}
+    />
+  ),
+  Award: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14z',
+        'M8.21 13.89L7 23l5-3 5 3-1.21-9.12',
+      ]}
+    />
+  ),
+  Calendar: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z',
+        'M16 2v4',
+        'M8 2v4',
+        'M3 10h18',
+      ]}
+    />
+  ),
+  Save: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z',
+        'M17 21v-8H7v8',
+        'M7 3v5h8',
+      ]}
+    />
+  ),
+  Check: ({ s = 16 }) => <Ic size={s} paths={['M20 6L9 17l-5-5']} />,
+  CheckCircle: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={['M22 11.08V12a10 10 0 1 1-5.93-9.14', 'M22 4L12 14.01l-3-3']}
+    />
+  ),
+  Camera: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z',
+        'M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+      ]}
+    />
+  ),
+  Mail: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z',
+        'M22 6l-10 7L2 6',
+      ]}
+    />
+  ),
+  MapPin: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z',
+        'M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+      ]}
+    />
+  ),
+  Briefcase: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z',
+        'M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16',
+      ]}
+    />
+  ),
+  Clock: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={['M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z', 'M12 6v6l4 2']}
+    />
+  ),
+  TrendingUp: ({ s = 16 }) => (
+    <Ic size={s} paths={['M22 7l-8.5 8.5-5-5L2 17', 'M16 7h6v6']} />
+  ),
+  Zap: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      fill="currentColor"
+      stroke="none"
+      paths={['M13 2L3 14h9l-1 8 10-12h-9l1-8z']}
+    />
+  ),
+  ChevRight: ({ s = 16 }) => <Ic size={s} paths={['M9 18l6-6-6-6']} />,
+  Edit: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7',
+        'M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z',
+      ]}
+    />
+  ),
+  Layers: ({ s = 16 }) => (
+    <Ic
+      size={s}
+      paths={[
+        'M12 2L2 7l10 5 10-5-10-5z',
+        'M2 17l10 5 10-5',
+        'M2 12l10 5 10-5',
+      ]}
+    />
+  ),
+};
+
+/* ══════════════ CSS ══════════════ */
+const CSS = `
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  --ink:#04040C;
+  --violet:#7B5CF5;--violet2:#9D7DFF;--violet-dim:rgba(123,92,245,.1);
+  --gold:#F5A623;--gold2:#FFD166;--gold-dim:rgba(245,166,35,.1);
+  --emerald:#06D6A0;--emerald-dim:rgba(6,214,160,.08);
+  --rose:#FF6B9D;
+  --text:#F0EFF8;--text2:#8B8AA8;--text3:#3D3C56;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.11);
+  --r:12px;--rl:20px;
+  --ease:cubic-bezier(.25,.46,.45,.94);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --font-d:'Outfit',sans-serif;
+  --font-b:'Plus Jakarta Sans',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+}
+body{background:var(--ink);color:var(--text);font-family:var(--font-b);overflow-x:hidden;cursor:none;min-height:100vh}
+
+/* CURSOR */
+#pf-cursor{position:fixed;width:10px;height:10px;background:var(--violet2);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .2s var(--spring),height .2s var(--spring),background .2s}
+#pf-cursor-ring{position:fixed;width:34px;height:34px;border:1px solid rgba(123,92,245,.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%)}
+
+/* CANVAS + NOISE */
+#pf-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.pf-noise{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.024;background-image:url("data:image/svg+xml,%3Csvg xmlns='[w3.org](http://www.w3.org/2000/svg)'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ═══ LAYOUT ═══ */
+.pf-main{
+  width:100%;
+  min-width:0;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  z-index:2;
+}
+
+/* ═══ BODY ═══ */
+.pf-body{padding:2rem;display:flex;flex-direction:column;gap:2rem;flex:1;max-width:1400px;margin:0 auto;width:100%}
+
+/* ═══ PAGE HEADER ═══ */
+.pf-page-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;animation:pfFade .6s var(--ease) both}
+.pf-eyebrow{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--font-m);font-size:.65rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--violet2);margin-bottom:.6rem}
+.pf-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--violet2);box-shadow:0 0 8px var(--violet2);animation:pfPulse 2s ease-in-out infinite}
+@keyframes pfPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.pf-page-title{font-family:var(--font-d);font-size:clamp(1.75rem,3.5vw,2.4rem);font-weight:800;letter-spacing:-1.5px;line-height:1.1;background:linear-gradient(135deg,var(--text),var(--violet2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.4rem}
+.pf-page-sub{font-size:.9rem;color:var(--text2);line-height:1.6;max-width:520px}
+@keyframes pfFade{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+/* ═══ ALERTS ═══ */
+.pf-alert{padding:1rem 1.25rem;border-radius:14px;font-size:.875rem;margin-bottom:.5rem;animation:pfSlide .5s var(--ease);display:flex;align-items:center;gap:.75rem}
+@keyframes pfSlide{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.pf-alert-success{background:rgba(6,214,160,.08);border:1px solid rgba(6,214,160,.25);color:var(--emerald)}
+.pf-alert-error{background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);color:#FF6B6B}
+
+/* ═══ PROFILE HERO CARD ═══ */
+.pf-hero-card{
+  padding:1px;
+  background:linear-gradient(135deg,rgba(123,92,245,.55),rgba(157,125,255,.32),rgba(123,92,245,.25));
+  border-radius:var(--rl);
+  box-shadow:0 0 55px rgba(123,92,245,.08);
+  animation:pfFade .6s .08s var(--ease) both;
+}
+.pf-hero-in{
+  background:linear-gradient(135deg,rgba(20,14,32,.97),rgba(15,11,26,.97));
+  border-radius:calc(var(--rl) - 1px);
+  padding:2rem 2.2rem;
+  display:flex;align-items:center;
+  gap:2rem;flex-wrap:wrap;
+  position:relative;overflow:hidden;
+}
+.pf-hero-in::after{content:'';position:absolute;top:0;left:-100%;bottom:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.03),transparent);animation:pfShimmer 8s ease-in-out infinite;pointer-events:none}
+@keyframes pfShimmer{0%{left:-100%}100%{left:220%}}
+
+.pf-avatar-wrap{position:relative;flex-shrink:0}
+.pf-avatar{
+  width:100px;height:100px;border-radius:50%;
+  background:linear-gradient(135deg,var(--violet),#5B3CC5);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  box-shadow:0 0 40px rgba(123,92,245,.4);
+  border:3px solid rgba(123,92,245,.3);
+  animation:pfAvatarPulse 4s ease-in-out infinite;
+}
+@keyframes pfAvatarPulse{0%,100%{box-shadow:0 0 30px rgba(123,92,245,.3)}50%{box-shadow:0 0 50px rgba(123,92,245,.5)}}
+.pf-avatar img{width:100%;height:100%;object-fit:cover}
+.pf-avatar-letter{font-family:var(--font-d);font-size:2.5rem;font-weight:800;color:#fff}
+.pf-avatar-edit{
+  position:absolute;bottom:0;right:0;
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),#E08C0A);
+  border:2px solid var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  color:#0A0A14;cursor:pointer;
+  transition:all .25s var(--spring);
+}
+.pf-avatar-edit:hover{transform:scale(1.1);box-shadow:0 0 20px rgba(245,166,35,.5)}
+
+.pf-hero-info{flex:1;min-width:0}
+.pf-hero-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .7rem;border-radius:100px;font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-m);margin-bottom:.6rem}
+.pf-badge-premium{background:linear-gradient(135deg,#F5A623,#FFD166);color:#0A0A14}
+.pf-badge-free{background:rgba(123,92,245,.15);border:1px solid rgba(123,92,245,.3);color:var(--violet2)}
+.pf-hero-name{font-family:var(--font-d);font-size:1.65rem;font-weight:800;letter-spacing:-.5px;color:var(--text);margin-bottom:.5rem}
+.pf-hero-meta{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;font-size:.85rem;color:var(--text2)}
+.pf-meta-item{display:flex;align-items:center;gap:.35rem}
+.pf-meta-dot{width:4px;height:4px;background:rgba(255,255,255,.2);border-radius:50%}
+
+/* ═══ STAT CARDS ═══ */
+.pf-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;animation:pfFade .6s .12s var(--ease) both}
+.pf-stat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--rl);padding:1.2rem 1.35rem;display:flex;flex-direction:column;gap:.55rem;position:relative;overflow:hidden;transition:all .3s var(--ease)}
+.pf-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--sc,rgba(123,92,245,.6)) 50%,transparent);opacity:0;transition:opacity .3s}
+.pf-stat:hover{border-color:var(--sb,rgba(123,92,245,.28));transform:translateY(-3px);box-shadow:0 16px 38px rgba(0,0,0,.3)}
+.pf-stat:hover::before{opacity:1}
+.pf-stat-top{display:flex;align-items:center;justify-content:space-between}
+.pf-stat-label{font-family:var(--font-m);font-size:.68rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text2)}
+.pf-stat-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pf-stat-val{font-family:var(--font-d);font-size:1.85rem;font-weight:800;letter-spacing:-1.5px;line-height:1}
+.pf-stat-sub{font-size:.7rem;color:var(--text3);font-family:var(--font-m)}
+.ico-v{background:var(--violet-dim);border:1px solid rgba(123,92,245,.18);color:#C4B1FF}
+.ico-g{background:var(--gold-dim);border:1px solid rgba(245,166,35,.18);color:var(--gold2)}
+.ico-e{background:var(--emerald-dim);border:1px solid rgba(6,214,160,.18);color:#6EE7B7}
+
+/* ═══ GRID LAYOUT ═══ */
+.pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;animation:pfFade .6s .16s var(--ease) both}
+
+/* ═══ CARD ═══ */
+.pf-card{background:rgba(255,255,255,.03);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:var(--rl);padding:1.75rem;transition:all .3s var(--ease);position:relative;overflow:hidden}
+.pf-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(123,92,245,.4) 50%,transparent);opacity:0;transition:opacity .3s}
+.pf-card:hover{border-color:rgba(123,92,245,.25);box-shadow:0 20px 40px rgba(0,0,0,.25)}
+.pf-card:hover::before{opacity:1}
+
+.pf-card-hdr{display:flex;align-items:center;gap:.6rem;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.pf-card-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.pf-card-ico.violet{background:var(--violet-dim);border:1px solid rgba(123,92,245,.2);color:var(--violet2)}
+.pf-card-ico.emerald{background:var(--emerald-dim);border:1px solid rgba(6,214,160,.2);color:var(--emerald)}
+.pf-card-title{font-family:var(--font-d);font-size:1.1rem;font-weight:700;letter-spacing:-.3px}
+
+/* ═══ FORM ═══ */
+.pf-form-group{margin-bottom:1.25rem}
+.pf-label{display:block;font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:.45rem;font-family:var(--font-m);letter-spacing:.02em}
+.pf-input,.pf-select,.pf-textarea{
+  width:100%;padding:.85rem 1rem;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:12px;color:var(--text);
+  font-family:var(--font-b);font-size:.9rem;
+  transition:all .3s var(--ease);
+}
+.pf-input::placeholder,.pf-textarea::placeholder{color:var(--text3)}
+.pf-input:focus,.pf-select:focus,.pf-textarea:focus{outline:none;border-color:var(--violet);background:rgba(123,92,245,.06);box-shadow:0 0 0 4px rgba(123,92,245,.1)}
+.pf-select option{background:var(--ink);color:var(--text)}
+.pf-textarea{min-height:120px;resize:vertical;line-height:1.6}
+
+/* ═══ BUTTONS ═══ */
+.btn-violet{padding:.7rem 1.4rem;border-radius:11px;background:linear-gradient(135deg,#7B5CF5,#5B3CC5);border:none;cursor:pointer;color:#fff;font-family:var(--font-d);font-size:.875rem;font-weight:700;display:inline-flex;align-items:center;gap:.45rem;box-shadow:0 0 0 1px rgba(123,92,245,.4),0 6px 20px rgba(123,92,245,.28);transition:all .25s var(--spring);white-space:nowrap}
+.btn-violet:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(123,92,245,.6),0 10px 30px rgba(123,92,245,.42);filter:brightness(1.08)}
+.btn-violet:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none}
+
+/* ═══ DELIVERABLES LIST ═══ */
+.pf-del-list{display:flex;flex-direction:column;gap:.65rem}
+.pf-del-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:1rem 1.15rem;
+  background:rgba(0,0,0,.25);
+  border:1px solid var(--border);
+  border-radius:12px;
+  color:var(--text);text-decoration:none;
+  font-size:.875rem;font-weight:500;
+  transition:all .3s var(--ease);
+  position:relative;overflow:hidden;
+}
+.pf-del-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--emerald),#6EE7B7);border-radius:2px;transform:scaleY(0);transition:transform .3s var(--ease)}
+.pf-del-item:hover{border-color:rgba(6,214,160,.3);background:rgba(6,214,160,.04);transform:translateX(4px)}
+.pf-del-item:hover::before{transform:scaleY(1)}
+.pf-del-left{display:flex;align-items:center;gap:.6rem}
+.pf-del-num{font-family:var(--font-m);font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+.pf-del-title{color:var(--text)}
+.pf-del-arrow{color:var(--emerald);display:flex;align-items:center;gap:.25rem;font-size:.8rem;font-family:var(--font-m)}
+
+.pf-empty{text-align:center;padding:2.5rem 1.5rem;display:flex;flex-direction:column;align-items:center;gap:.75rem}
+.pf-empty-ico{width:52px;height:52px;border-radius:14px;background:var(--violet-dim);border:1px solid rgba(123,92,245,.2);display:flex;align-items:center;justify-content:center;color:var(--violet2)}
+.pf-empty-title{font-family:var(--font-d);font-size:1rem;font-weight:700}
+.pf-empty-sub{font-size:.82rem;color:var(--text2);line-height:1.55;max-width:280px}
+
+/* ═══ LOADING ═══ */
+.pf-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:80vh;gap:1.2rem;position:relative;z-index:2}
+.pf-spin{width:44px;height:44px;border-radius:50%;border:3px solid rgba(123,92,245,.2);border-top-color:#7B5CF5;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pf-spin-txt{color:var(--text2);font-size:.88rem;font-family:var(--font-m)}
+
+/* ═══ SCROLL REVEAL ═══ */
+.pf-rev{opacity:0;transform:translateY(22px);transition:opacity .65s var(--ease),transform .65s var(--ease)}
+.pf-rev.vis{opacity:1;transform:none}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1024px){
+  .pf-stats-row{grid-template-columns:repeat(3,1fr)}
+  .pf-grid{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .pf-body{padding:1.25rem}
+  .pf-hero-in{flex-direction:column;align-items:center;text-align:center;padding:1.5rem}
+  .pf-hero-meta{justify-content:center}
+  .pf-stats-row{grid-template-columns:1fr 1fr}
+  .pf-page-title{font-size:1.6rem}
+}
+@media(max-width:480px){
+  .pf-stats-row{grid-template-columns:1fr}
+  .pf-avatar{width:80px;height:80px}
+  .pf-avatar-letter{font-size:2rem}
+  .pf-hero-name{font-size:1.35rem}
+}
+`;
+
+/* ══════════════ ANIMATED COUNTER ══════════════ */
+function useCounter(target, duration = 1000) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!target) return;
+    let start = null;
+    const step = (ts) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / duration, 1);
+      setVal(Math.floor(p * target));
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [target, duration]);
+  return val;
+}
+
+/* ══════════════ SCROLL REVEAL ══════════════ */
+function useReveal() {
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (es) =>
+        es.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('vis');
+            obs.unobserve(e.target);
+          }
+        }),
+      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+    );
+    document.querySelectorAll('.pf-rev').forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  });
+}
+
+/* ══════════════ STAT CARD ══════════════ */
+function StatCard({ label, raw, suffix = '', sub, Ico, icoClass, sc, sb, delay }) {
+  const counted = useCounter(raw || 0, 900);
+  return (
+    <div
+      className="pf-stat pf-rev"
+      style={{ '--sc': sc, '--sb': sb, transitionDelay: delay }}
+    >
+      <div className="pf-stat-top">
+        <span className="pf-stat-label">{label}</span>
+        <div className={`pf-stat-ico ${icoClass}`}>
+          <Ico />
+        </div>
+      </div>
+      <div className="pf-stat-val">
+        {counted}
+        {suffix}
+      </div>
+      <div className="pf-stat-sub">{sub}</div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+══════════════════════════════════════════════════════════════ */
 const Profile = () => {
   const { user, token, updateStartupProfile } = useAuth();
   const fileInputRef = useRef(null);
@@ -10,14 +598,21 @@ const Profile = () => {
   const [startupIdea, setStartupIdea] = useState(user?.startupIdea || '');
   const [category, setCategory] = useState(user?.category || '');
   const [profileImage, setProfileImage] = useState(user?.profileImage || '');
-  const [profileImagePreview, setProfileImagePreview] = useState(user?.profileImage || '');
+  const [profileImagePreview, setProfileImagePreview] = useState(
+    user?.profileImage || ''
+  );
   const [modules, setModules] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [mounted, setMounted] = useState(false);
+
+  const canvasRef = useRef(null);
+  const cursorRef = useRef(null);
+  const ringRef = useRef(null);
+
+  useReveal();
 
   const categories = [
     'Tech Startup',
@@ -29,13 +624,63 @@ const Profile = () => {
     'Social Impact',
     'Manufacturing',
     'Services',
-    'Other'
+    'Other',
   ];
 
+  /* CSS + fonts */
   useEffect(() => {
-    setMounted(true);
+    injectFonts();
+    let el = document.getElementById('pf-css');
+    if (!el) {
+      el = document.createElement('style');
+      el.id = 'pf-css';
+      document.head.appendChild(el);
+    }
+    el.textContent = CSS;
   }, []);
 
+  /* Cursor */
+  useEffect(() => {
+    let rx = 0,
+      ry = 0,
+      tx = 0,
+      ty = 0,
+      raf;
+    const move = (e) => {
+      tx = e.clientX;
+      ty = e.clientY;
+    };
+    window.addEventListener('mousemove', move, { passive: true });
+    const loop = () => {
+      raf = requestAnimationFrame(loop);
+      rx += (tx - rx) * 0.13;
+      ry += (ty - ry) * 0.13;
+      if (cursorRef.current) {
+        cursorRef.current.style.left = `${tx}px`;
+        cursorRef.current.style.top = `${ty}px`;
+      }
+      if (ringRef.current) {
+        ringRef.current.style.left = `${rx}px`;
+        ringRef.current.style.top = `${ry}px`;
+      }
+    };
+    loop();
+    return () => {
+      window.removeEventListener('mousemove', move);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  /* BG particles */
+  useEffect(() => {
+    let destroy;
+    loadThree().then(() => {
+      if (canvasRef.current) destroy = createBgParticles(canvasRef.current);
+    });
+    return () => destroy?.();
+  }, []);
+
+  /* Sync user data */
   useEffect(() => {
     if (user) {
       setStartupIdea(user.startupIdea || '');
@@ -45,11 +690,12 @@ const Profile = () => {
     }
   }, [user]);
 
+  /* Fetch profile data */
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
         const modulesRes = await fetch(`${API_URL}/modules`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (modulesRes.ok) {
           const mData = await modulesRes.json();
@@ -57,7 +703,7 @@ const Profile = () => {
         }
 
         const statsRes = await fetch(`${API_URL}/profile/progress`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (statsRes.ok) {
           const sData = await statsRes.json();
@@ -106,619 +752,266 @@ const Profile = () => {
     }
   };
 
-  const completedModules = modules.filter(m => m.status === 'completed');
+  const completedModules = modules.filter((m) => m.status === 'completed');
+  const completedCount = completedModules.length;
+  const currentModule = stats?.currentModule || 1;
+  const timeOnPlatform = stats?.timeOnPlatform || '0m';
 
-  if (loading) {
+  /* ── Loading ── */
+  if (loading)
     return (
       <>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-          body { font-family: 'Plus Jakarta Sans', sans-serif; background: #04040C; color: #F0EFF8; }
-          .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; gap: 1rem; }
-          .loading-spinner { width: 48px; height: 48px; border: 3px solid rgba(123, 92, 245, 0.2); border-top-color: #7B5CF5; border-radius: 50%; animation: spin 1s linear infinite; }
-          @keyframes spin { to { transform: rotate(360deg); } }
-          .loading-text { color: #8B8AA8; font-size: 0.95rem; }
-        `}</style>
-        <div className="loading-container">
-          <div className="loading-spinner" />
-          <p className="loading-text">Loading Profile...</p>
+        <div id="pf-cursor" ref={cursorRef} />
+        <div id="pf-cursor-ring" ref={ringRef} />
+        <div className="pf-noise" />
+        <canvas id="pf-canvas" ref={canvasRef} />
+        <div className="pf-loading">
+          <div className="pf-spin" />
+          <p className="pf-spin-txt">Loading profile...</p>
         </div>
       </>
     );
-  }
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #04040C; color: #F0EFF8; min-height: 100vh; }
-        
-        .floating-particles {
-          position: fixed;
-          inset: 0;
-          pointer-events: none;
-          z-index: 0;
-          overflow: hidden;
-        }
+      <div id="pf-cursor" ref={cursorRef} />
+      <div id="pf-cursor-ring" ref={ringRef} />
+      <div className="pf-noise" />
+      <canvas id="pf-canvas" ref={canvasRef} />
 
-        .particle {
-          position: absolute;
-          width: 4px;
-          height: 4px;
-          background: rgba(123, 92, 245, 0.3);
-          border-radius: 50%;
-          animation: floatParticle 15s infinite linear;
-        }
-
-        .particle:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; animation-duration: 18s; }
-        .particle:nth-child(2) { left: 20%; top: 60%; animation-delay: 2s; animation-duration: 20s; }
-        .particle:nth-child(3) { left: 30%; top: 40%; animation-delay: 4s; animation-duration: 22s; }
-        .particle:nth-child(4) { left: 40%; top: 80%; animation-delay: 6s; animation-duration: 16s; }
-        .particle:nth-child(5) { left: 50%; top: 10%; animation-delay: 8s; animation-duration: 24s; }
-        .particle:nth-child(6) { left: 60%; top: 70%; animation-delay: 10s; animation-duration: 19s; }
-        .particle:nth-child(7) { left: 70%; top: 30%; animation-delay: 12s; animation-duration: 21s; }
-        .particle:nth-child(8) { left: 80%; top: 50%; animation-delay: 14s; animation-duration: 17s; }
-        .particle:nth-child(9) { left: 90%; top: 90%; animation-delay: 16s; animation-duration: 23s; }
-        .particle:nth-child(10) { left: 15%; top: 85%; animation-delay: 18s; animation-duration: 25s; }
-        .particle:nth-child(11) { left: 25%; top: 15%; animation-delay: 20s; animation-duration: 20s; background: rgba(245, 166, 35, 0.2); }
-        .particle:nth-child(12) { left: 35%; top: 55%; animation-delay: 22s; animation-duration: 18s; background: rgba(245, 166, 35, 0.2); }
-        .particle:nth-child(13) { left: 45%; top: 25%; animation-delay: 24s; animation-duration: 22s; background: rgba(245, 166, 35, 0.2); }
-        .particle:nth-child(14) { left: 55%; top: 75%; animation-delay: 26s; animation-duration: 19s; background: rgba(245, 166, 35, 0.2); }
-        .particle:nth-child(15) { left: 65%; top: 45%; animation-delay: 28s; animation-duration: 21s; background: rgba(245, 166, 35, 0.2); }
-
-        @keyframes floatParticle {
-          0% {
-            transform: translateY(100vh) translateX(0) scale(0);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-            transform: translateY(80vh) translateX(20px) scale(1);
-          }
-          90% {
-            opacity: 1;
-            transform: translateY(10vh) translateX(-20px) scale(1);
-          }
-          100% {
-            transform: translateY(-10vh) translateX(0) scale(0);
-            opacity: 0;
-          }
-        }
-
-        .profile-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 2rem;
-          animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .page-header { margin-bottom: 2.5rem; }
-        
-        .page-title {
-          font-family: 'Outfit', sans-serif;
-          font-size: 2.25rem;
-          font-weight: 700;
-          margin-bottom: 0.5rem;
-          background: linear-gradient(135deg, #F0EFF8, #9D7DFF);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        
-        .page-subtitle {
-          font-size: 1rem;
-          color: #8B8AA8;
-          line-height: 1.6;
-        }
-        
-        .alert {
-          padding: 1rem 1.25rem;
-          border-radius: 12px;
-          font-size: 0.875rem;
-          margin-bottom: 1.5rem;
-          animation: slideDown 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .alert-success {
-          background: rgba(6, 214, 160, 0.1);
-          border: 1px solid rgba(6, 214, 160, 0.3);
-          color: #06D6A0;
-        }
-        
-        .alert-error {
-          background: rgba(255, 107, 107, 0.1);
-          border: 1px solid rgba(255, 107, 107, 0.3);
-          color: #FF6B6B;
-        }
-        
-        .card {
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 20px;
-          padding: 1.75rem;
-          transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        
-        .card:hover {
-          border-color: rgba(123, 92, 245, 0.3);
-          transform: translateY(-4px);
-          box-shadow: 0 20px 40px rgba(123, 92, 245, 0.1);
-        }
-        
-        .user-header {
-          display: flex;
-          align-items: center;
-          gap: 1.5rem;
-          margin-bottom: 2.5rem;
-          flex-wrap: wrap;
-        }
-        
-        .profile-avatar {
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          overflow: hidden;
-          background: linear-gradient(135deg, #7B5CF5, #5B3CC5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          box-shadow: 0 0 30px rgba(123, 92, 245, 0.4);
-        }
-        
-        .profile-avatar img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        
-        .profile-avatar span {
-          font-family: 'Outfit', sans-serif;
-          font-size: 1.75rem;
-          font-weight: 800;
-          color: #fff;
-        }
-        
-        .user-info { flex: 1; min-width: 0; }
-        
-        .user-name {
-          font-family: 'Outfit', sans-serif;
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin-bottom: 0.5rem;
-        }
-        
-        .user-meta {
-          display: flex;
-          gap: 0.75rem;
-          align-items: center;
-          flex-wrap: wrap;
-          font-size: 0.9rem;
-          color: #8B8AA8;
-          margin-bottom: 0.75rem;
-        }
-        
-        .user-meta strong { color: #F0EFF8; }
-        
-        .user-meta-dot {
-          width: 4px;
-          height: 4px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
-        }
-        
-        .user-actions {
-          display: flex;
-          gap: 0.75rem;
-          flex-wrap: wrap;
-          align-items: center;
-        }
-        
-        .badge {
-          padding: 0.35rem 0.85rem;
-          border-radius: 8px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.25rem;
-        }
-        
-        .badge-premium {
-          background: linear-gradient(135deg, #F5A623, #FFD166);
-          color: #04040C;
-        }
-        
-        .badge-free {
-          background: rgba(123, 92, 245, 0.15);
-          border: 1px solid rgba(123, 92, 245, 0.3);
-          color: #9D7DFF;
-        }
-        
-        .btn-outline {
-          background: transparent;
-          border: 1px solid rgba(123, 92, 245, 0.4);
-          border-radius: 10px;
-          padding: 0.5rem 1rem;
-          color: #9D7DFF;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 0.85rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.3s;
-        }
-        
-        .btn-outline:hover {
-          background: rgba(123, 92, 245, 0.1);
-          border-color: #7B5CF5;
-        }
-        
-        .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 1.5rem;
-          margin-bottom: 2.5rem;
-        }
-        
-        .stat-card {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-        
-        .stat-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        
-        .stat-icon.violet { background: rgba(123, 92, 245, 0.15); color: #7B5CF5; }
-        .stat-icon.gold { background: rgba(245, 166, 35, 0.15); color: #F5A623; }
-        .stat-icon.emerald { background: rgba(6, 214, 160, 0.15); color: #06D6A0; }
-        
-        .stat-info { flex: 1; }
-        
-        .stat-label {
-          font-size: 0.75rem;
-          color: #8B8AA8;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.25rem;
-        }
-        
-        .stat-value {
-          font-family: 'Outfit', sans-serif;
-          font-size: 1.5rem;
-          font-weight: 800;
-        }
-        
-        .section-header {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          margin-bottom: 1.5rem;
-          padding-bottom: 1rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        
-        .section-title {
-          font-family: 'Outfit', sans-serif;
-          font-size: 1.25rem;
-          font-weight: 700;
-        }
-        
-        .form-group { margin-bottom: 1.5rem; }
-        
-        .form-label {
-          display: block;
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: #F0EFF8;
-          margin-bottom: 0.5rem;
-        }
-        
-        .form-input,
-        .form-select,
-        .form-textarea {
-          width: 100%;
-          padding: 0.875rem 1rem;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          color: #F0EFF8;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 0.95rem;
-          transition: all 0.3s;
-        }
-        
-        .form-input::placeholder,
-        .form-textarea::placeholder {
-          color: #5A5872;
-        }
-        
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus {
-          outline: none;
-          border-color: #7B5CF5;
-          background: rgba(123, 92, 245, 0.08);
-          box-shadow: 0 0 0 4px rgba(123, 92, 245, 0.1);
-        }
-        
-        .form-select option {
-          background: #04040C;
-          color: #F0EFF8;
-        }
-        
-        .form-textarea {
-          min-height: 140px;
-          resize: vertical;
-          line-height: 1.6;
-        }
-        
-        .btn-primary {
-          background: linear-gradient(135deg, #7B5CF5, #5B3CC5);
-          border: none;
-          border-radius: 10px;
-          padding: 0.75rem 1.5rem;
-          color: #fff;
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.9rem;
-          font-weight: 600;
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          transition: all 0.3s;
-          box-shadow: 0 4px 15px rgba(123, 92, 245, 0.3);
-        }
-        
-        .btn-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(123, 92, 245, 0.4);
-        }
-        
-        .btn-primary:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-        
-        .deliverables-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-        
-        .deliverable-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1rem 1.25rem;
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 12px;
-          color: #F0EFF8;
-          text-decoration: none;
-          font-size: 0.9rem;
-          font-weight: 500;
-          transition: all 0.3s;
-        }
-        
-        .deliverable-item:hover {
-          border-color: rgba(123, 92, 245, 0.4);
-          background: rgba(123, 92, 245, 0.05);
-          transform: translateX(4px);
-        }
-        
-        .deliverable-item span:last-child {
-          color: #7B5CF5;
-          font-size: 0.85rem;
-        }
-        
-        .empty-state {
-          font-style: italic;
-          font-size: 0.9rem;
-          color: #8B8AA8;
-          padding: 1.5rem;
-          text-align: center;
-        }
-        
-        @media (max-width: 768px) {
-          .profile-container { padding: 1.5rem; }
-          .user-header { flex-direction: column; text-align: center; }
-          .user-meta { justify-content: center; }
-          .user-actions { justify-content: center; }
-          .stats-grid { grid-template-columns: 1fr; }
-          .page-title { font-size: 1.75rem; }
-        }
-      `}</style>
-      
-      <div className="floating-particles">
-        {[...Array(15)].map((_, i) => (
-          <div key={i} className="particle" />
-        ))}
-      </div>
-      
-      <div className="profile-container">
-        {/* Header */}
-        <div className="page-header">
-          <h1 className="page-title">My Profile</h1>
-          <p className="page-subtitle">Manage your account settings, startup details, and review your progress metrics.</p>
-        </div>
-
-        {/* Success/Error Alerts */}
-        {successMsg && (
-          <div className="alert alert-success">
-            {successMsg}
-          </div>
-        )}
-        {errorMsg && (
-          <div className="alert alert-error">
-            {errorMsg}
-          </div>
-        )}
-
-        {/* User Header Details */}
-        <div className="card user-header">
-          <div className="profile-avatar">
-            {profileImagePreview ? (
-              <img src={profileImagePreview} alt="Profile" />
-            ) : (
-              <span>{user?.name?.charAt(0).toUpperCase()}</span>
-            )}
-          </div>
-
-          <div className="user-info">
-            <h2 className="user-name">{user?.name}</h2>
-            <div className="user-meta">
-              <span>{user?.email}</span>
-              <span className="user-meta-dot" />
-              <span>Region: <strong>{user?.region}</strong></span>
-            </div>
-            <div className="user-actions">
-              {user?.plan === 'premium' ? (
-                <span className="badge badge-premium">
-                  <Sparkles size={12} /> Premium Membership
-                </span>
-              ) : (
-                <span className="badge badge-free">
-                  Free Account
-                </span>
-              )}
-              <button type="button" className="btn-outline" onClick={openFilePicker}>
-                Change photo
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleSelectedImage}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Progress Dashboard */}
-        <div className="stats-grid">
-          <div className="card stat-card">
-            <div className="stat-icon violet">
-              <Award size={24} />
-            </div>
-            <div className="stat-info">
-              <div className="stat-label">Modules Completed</div>
-              <div className="stat-value">{stats?.completedCount || 0}/30</div>
-            </div>
-          </div>
-
-          <div className="card stat-card">
-            <div className="stat-icon gold">
-              <Compass size={24} />
-            </div>
-            <div className="stat-info">
-              <div className="stat-label">Active Module</div>
-              <div className="stat-value">Module {stats?.currentModule || 1}</div>
-            </div>
-          </div>
-
-          <div className="card stat-card">
-            <div className="stat-icon emerald">
-              <Calendar size={24} />
-            </div>
-            <div className="stat-info">
-              <div className="stat-label">Time on Platform</div>
-              <div className="stat-value">{stats?.timeOnPlatform || '0m'}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Edit Startup Profile */}
-        <div className="card" style={{ marginBottom: '2.5rem' }}>
-          <div className="section-header">
-            <Target size={20} style={{ color: '#7B5CF5' }} />
-            <h3 className="section-title">Startup Profile</h3>
-          </div>
-          
-          <form onSubmit={handleSave}>
-            <div className="form-group">
-              <label htmlFor="profile-category" className="form-label">Business Category</label>
-              <select
-                id="profile-category"
-                className="form-select"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                required
-              >
-                <option value="" disabled>Select business category</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="profile-idea" className="form-label">Startup Concept / Pitch Brief</label>
-              <textarea
-                id="profile-idea"
-                className="form-textarea"
-                value={startupIdea}
-                onChange={(e) => setStartupIdea(e.target.value)}
-                placeholder="Describe your startup idea..."
-                required
-              />
-            </div>
-
+      <div className="pf-main">
+        <div className="pf-body">
+          {/* ── Page header ── */}
+          <div className="pf-page-hdr">
             <div>
-              <button type="submit" className="btn-primary" disabled={updating}>
-                <Save size={16} /> {updating ? 'Saving changes...' : 'Save Profile Changes'}
-              </button>
+              <div className="pf-eyebrow">
+                <div className="pf-eyebrow-dot" /> Account Settings
+              </div>
+              <h1 className="pf-page-title">My Profile</h1>
+              <p className="pf-page-sub">
+                Manage your account settings, startup details, and review your
+                progress metrics.
+              </p>
             </div>
-          </form>
-        </div>
-
-        {/* Completed Deliverables List */}
-        <div className="card">
-          <div className="section-header">
-            <Award size={20} style={{ color: '#06D6A0' }} />
-            <h3 className="section-title">Completed Deliverables</h3>
           </div>
-          
-          {completedModules.length === 0 ? (
-            <p className="empty-state">
-              No deliverables completed yet. Go to Modules to start validation.
-            </p>
-          ) : (
-            <div className="deliverables-list">
-              {completedModules.map((mod) => (
-                <Link
-                  key={mod.moduleId}
-                  to={`/modules/${mod.moduleId}`}
-                  className="deliverable-item"
-                >
-                  <span>Module {mod.moduleId}: {mod.title}</span>
-                  <span>Review →</span>
-                </Link>
-              ))}
+
+          {/* ── Alerts ── */}
+          {successMsg && (
+            <div className="pf-alert pf-alert-success">
+              <Icons.CheckCircle s={18} />
+              {successMsg}
             </div>
           )}
+          {errorMsg && (
+            <div className="pf-alert pf-alert-error">
+              <Icons.Zap s={18} />
+              {errorMsg}
+            </div>
+          )}
+
+          {/* ── Profile Hero Card ── */}
+          <div className="pf-hero-card">
+            <div className="pf-hero-in">
+              <div className="pf-avatar-wrap">
+                <div className="pf-avatar">
+                  {profileImagePreview ? (
+                    <img src={profileImagePreview} alt="Profile" />
+                  ) : (
+                    <span className="pf-avatar-letter">
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="pf-avatar-edit"
+                  onClick={openFilePicker}
+                  title="Change photo"
+                >
+                  <Icons.Camera s={14} />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleSelectedImage}
+                />
+              </div>
+
+              <div className="pf-hero-info">
+                <div
+                  className={`pf-hero-badge ${
+                    user?.plan === 'premium' ? 'pf-badge-premium' : 'pf-badge-free'
+                  }`}
+                >
+                  <Icons.Sparkles s={10} />
+                  {user?.plan === 'premium' ? 'Premium Member' : 'Free Account'}
+                </div>
+                <h2 className="pf-hero-name">{user?.name}</h2>
+                <div className="pf-hero-meta">
+                  <span className="pf-meta-item">
+                    <Icons.Mail s={14} />
+                    {user?.email}
+                  </span>
+                  <span className="pf-meta-dot" />
+                  <span className="pf-meta-item">
+                    <Icons.MapPin s={14} />
+                    {user?.region || 'Not set'}
+                  </span>
+                  {user?.category && (
+                    <>
+                      <span className="pf-meta-dot" />
+                      <span className="pf-meta-item">
+                        <Icons.Briefcase s={14} />
+                        {user.category}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Stat cards ── */}
+          <div className="pf-stats-row">
+            <StatCard
+              label="Modules Completed"
+              raw={completedCount}
+              suffix="/30"
+              sub="worksheets unlocked"
+              Ico={() => <Icons.Award s={15} />}
+              icoClass="ico-v"
+              sc="rgba(123,92,245,.6)"
+              sb="rgba(123,92,245,.28)"
+              delay="0s"
+            />
+            <StatCard
+              label="Active Module"
+              raw={currentModule}
+              suffix=""
+              sub="currently in progress"
+              Ico={() => <Icons.Compass s={15} />}
+              icoClass="ico-g"
+              sc="rgba(245,166,35,.6)"
+              sb="rgba(245,166,35,.28)"
+              delay=".05s"
+            />
+            <div className="pf-stat pf-rev">
+  <div className="pf-stat-top">
+    <span className="pf-stat-label">Time on Platform</span>
+    <div className="pf-stat-ico ico-e">
+      <Icons.Clock s={15} />
+    </div>
+  </div>
+
+  <div className="pf-stat-val">
+    {timeOnPlatform}
+  </div>
+
+  <div className="pf-stat-sub">
+    total learning time
+  </div>
+</div>
+          </div>
+
+          {/* ── Grid: Edit Profile + Deliverables ── */}
+          <div className="pf-grid">
+            {/* Edit Startup Profile */}
+            <div className="pf-card pf-rev">
+              <div className="pf-card-hdr">
+                <div className="pf-card-ico violet">
+                  <Icons.Target s={18} />
+                </div>
+                <h3 className="pf-card-title">Startup Profile</h3>
+              </div>
+
+              <form onSubmit={handleSave}>
+                <div className="pf-form-group">
+                  <label htmlFor="profile-category" className="pf-label">
+                    Business Category
+                  </label>
+                  <select
+                    id="profile-category"
+                    className="pf-select"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    required
+                  >
+                    <option value="" disabled>
+                      Select business category
+                    </option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="pf-form-group">
+                  <label htmlFor="profile-idea" className="pf-label">
+                    Startup Concept / Pitch Brief
+                  </label>
+                  <textarea
+                    id="profile-idea"
+                    className="pf-textarea"
+                    value={startupIdea}
+                    onChange={(e) => setStartupIdea(e.target.value)}
+                    placeholder="Describe your startup idea in a few sentences..."
+                    required
+                  />
+                </div>
+
+                <button type="submit" className="btn-violet" disabled={updating}>
+                  <Icons.Save s={15} />
+                  {updating ? 'Saving...' : 'Save Changes'}
+                </button>
+              </form>
+            </div>
+
+            {/* Completed Deliverables */}
+            <div className="pf-card pf-rev" style={{ transitionDelay: '.06s' }}>
+              <div className="pf-card-hdr">
+                <div className="pf-card-ico emerald">
+                  <Icons.CheckCircle s={18} />
+                </div>
+                <h3 className="pf-card-title">Completed Deliverables</h3>
+              </div>
+
+              {completedModules.length === 0 ? (
+                <div className="pf-empty">
+                  <div className="pf-empty-ico">
+                    <Icons.Layers s={22} />
+                  </div>
+                  <h4 className="pf-empty-title">No deliverables yet</h4>
+                  <p className="pf-empty-sub">
+                    Complete your first module to see your deliverables here.
+                  </p>
+                </div>
+              ) : (
+                <div className="pf-del-list">
+                  {completedModules.map((mod) => (
+                    <Link
+                      key={mod.moduleId}
+                      to={`/modules/${mod.moduleId}`}
+                      className="pf-del-item"
+                    >
+                      <div className="pf-del-left">
+                        <span className="pf-del-num">
+                          M{String(mod.moduleId).padStart(2, '0')}
+                        </span>
+                        <span className="pf-del-title">{mod.title}</span>
+                      </div>
+                      <span className="pf-del-arrow">
+                        Review <Icons.ChevRight s={14} />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </>

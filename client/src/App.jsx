@@ -23,23 +23,14 @@ import VCNetwork from './pages/VCNetwork';
 
 // Layout for authenticated routes
 const AuthenticatedLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
 
   return (
-    <div className={`app-container ${sidebarOpen ? 'sidebar-open' : ''}`}>
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+    <div className="app-container">
+      <Sidebar />
 
       <main className="main-content">
-        <button
-          type="button"
-          className="mobile-sidebar-toggle"
-          onClick={() => setSidebarOpen((prev) => !prev)}
-          aria-label="Toggle sidebar"
-        >
-          <Menu size={18} />
-        </button>
+        
         <Outlet />
       </main>
     </div>
