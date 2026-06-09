@@ -1222,8 +1222,15 @@ export default function LandingPage() {
               <span/><span/><span/>
             </button>
           </header>
-          <div className={`ml-mobile-overlay${mobileOpen?' open':''}`} onClick={()=>setMobileOpen(false)}/>
-          <nav className={`ml-mobile-menu${mobileOpen?' open':''}`} style={{display:'flex'}}>
+          <div
+  className={`ml-mobile-overlay${mobileOpen?' open':''}`}
+  onClick={()=>setMobileOpen(false)}
+  style={{ display: mobileOpen ? 'block' : 'none' }}
+/>
+          <nav
+  className={`ml-mobile-menu${mobileOpen?' open':''}`}
+  style={{ display: mobileOpen ? 'flex' : 'none' }}
+>
             {[['features','Features'],['demo','See It Live'],['steps','How It Works'],['pricing','Pricing'],['regions','Regions']].map(([id,label])=>(
               <span key={id} className="ml-nav-link" onClick={()=>scrollTo(id)}>{label}</span>
             ))}
