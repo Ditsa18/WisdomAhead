@@ -144,11 +144,7 @@ html{scroll-behavior:smooth}
   --font-m:'JetBrains Mono',monospace;
   --sidebar:260px;
 }
-body{background:var(--ink);color:var(--text);font-family:var(--font-b);overflow-x:hidden;cursor:none;min-height:100vh}
-
-/* CURSOR */
-#db-cursor{position:fixed;width:10px;height:10px;background:var(--violet2);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .2s var(--spring),height .2s var(--spring),background .2s}
-#db-cursor-ring{position:fixed;width:34px;height:34px;border:1px solid rgba(123,92,245,.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%)}
+body{background:var(--ink);color:var(--text);font-family:var(--font-b);overflow-x:hidden;min-height:100vh;cursor:auto!important}
 
 /* CANVAS + NOISE */
 #db-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
@@ -640,8 +636,6 @@ const Dashboard = () => {
   const [activeFilter, setActiveFilter] = useState('all');
 
   const canvasRef     = useRef(null);
-  const cursorRef     = useRef(null);
-  const ringRef       = useRef(null);
   const bgDestroyRef  = useRef(null);
 
   /* Fetch data */
@@ -667,21 +661,6 @@ const Dashboard = () => {
     let el = document.getElementById('db-css');
     if (!el) { el = document.createElement('style'); el.id = 'db-css'; document.head.appendChild(el); }
     el.textContent = CSS;
-  }, []);
-
-  /* Custom cursor */
-  useEffect(() => {
-    let rx=0,ry=0,tx=0,ty=0,raf;
-    const move = e => { tx=e.clientX; ty=e.clientY; };
-    window.addEventListener('mousemove', move, { passive:true });
-    const loop = () => {
-      raf = requestAnimationFrame(loop);
-      rx+=(tx-rx)*.13; ry+=(ty-ry)*.13;
-      if (cursorRef.current) { cursorRef.current.style.left=`${tx}px`; cursorRef.current.style.top=`${ty}px`; }
-      if (ringRef.current)   { ringRef.current.style.left=`${rx}px`;   ringRef.current.style.top=`${ry}px`; }
-    };
-    loop();
-    return () => { window.removeEventListener('mousemove', move); cancelAnimationFrame(raf); };
   }, []);
 
   /* BG particles */
@@ -713,8 +692,6 @@ const Dashboard = () => {
   /* ── Loading screen ── */
   if (loading) return (
     <>
-      <div id="db-cursor" ref={cursorRef}/>
-      <div id="db-cursor-ring" ref={ringRef}/>
       <div className="db-noise"/>
       <canvas id="db-canvas" ref={canvasRef}/>
       <div className="db-loading">
@@ -726,8 +703,6 @@ const Dashboard = () => {
 
   return (
     <>
-      <div id="db-cursor" ref={cursorRef}/>
-      <div id="db-cursor-ring" ref={ringRef}/>
       <div className="db-noise"/>
       <canvas id="db-canvas" ref={canvasRef}/>
 
