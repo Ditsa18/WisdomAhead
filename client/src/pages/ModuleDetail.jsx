@@ -3,11 +3,23 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { ArrowLeft, CheckCircle, Video, Save, Sparkles, BookOpen } from 'lucide-react';
 
+/*
+  MindLaunch — ModuleDetail v2
+  Restyled to match LandingPage / Dashboard / Sidebar / MyModules'
+  "Sticker Pop" Gen-Z theme: cream base, lavender/coral/mint/peach
+  accents, glassmorphism cards, Space Grotesk + Inter + JetBrains Mono.
+
+  - Dark floating-particle background replaced with the same CSS
+    gradient-mesh blobs used elsewhere.
+  - No custom/magnetic cursor on this page (kept default cursor).
+  - All data logic, fetch calls, form handling, and routes unchanged.
+*/
+
 const ModuleDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token, user } = useAuth();
-  
+
   const [moduleData, setModuleData] = useState(null);
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
@@ -27,7 +39,7 @@ const ModuleDetail = () => {
         const res = await fetch(`${API_URL}/modules/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        
+
         if (!res.ok) {
           const data = await res.json();
           throw new Error(data.message || 'Failed to fetch module details.');
@@ -35,7 +47,7 @@ const ModuleDetail = () => {
 
         const data = await res.json();
         setModuleData(data);
-        
+
         // Initialize form answers
         const initialAnswers = {};
         data.deliverableSchema.forEach(schema => {
@@ -76,14 +88,14 @@ const ModuleDetail = () => {
         },
         body: JSON.stringify({ deliverableAnswers: answers })
       });
-      
+
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.message || 'Failed to save deliverables');
       }
 
       setSuccessMsg('Deliverables saved and module marked as completed successfully!');
-      
+
       // Update local status locally
       setModuleData(prev => ({
         ...prev,
@@ -103,13 +115,19 @@ const ModuleDetail = () => {
     return (
       <>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-          body { font-family: 'Plus Jakarta Sans', sans-serif; background: #04040C; color: #F0EFF8; }
+          @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+          body { font-family: 'Inter', sans-serif; background: #FEFCF9; color: #1A1625; }
           .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; gap: 1rem; }
-          .loading-spinner { width: 48px; height: 48px; border: 3px solid rgba(123, 92, 245, 0.2); border-top-color: #7B5CF5; border-radius: 50%; animation: spin 1s linear infinite; }
+          .loading-spinner { width: 48px; height: 48px; border: 3px solid rgba(167, 139, 250, 0.2); border-top-color: #A78BFA; border-radius: 50%; animation: spin 1s linear infinite; }
           @keyframes spin { to { transform: rotate(360deg); } }
-          .loading-text { color: #8B8AA8; font-size: 0.95rem; }
+          .loading-text { color: #8B849B; font-size: 0.95rem; font-family: 'JetBrains Mono', monospace; }
+          /* Solid opaque layer — guarantees the cream background shows even if a
+             parent layout wrapper (e.g. around the sidebar) has its own dark
+             background sitting between <body> and this component. */
+          .ld-bg { position: fixed; inset: 0; z-index: 0; background: #FEFCF9; pointer-events: none; }
+          .loading-container { position: relative; z-index: 1; }
         `}</style>
+        <div className="ld-bg" aria-hidden="true" />
         <div className="loading-container">
           <div className="loading-spinner" />
           <p className="loading-text">Loading module curriculum...</p>
@@ -122,13 +140,16 @@ const ModuleDetail = () => {
     return (
       <>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-          body { font-family: 'Plus Jakarta Sans', sans-serif; background: #04040C; color: #F0EFF8; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+          @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+          body { font-family: 'Inter', sans-serif; background: #FEFCF9; color: #1A1625; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
           .error-container { display: flex; flex-direction: column; gap: 1rem; align-items: center; text-align: center; }
-          .error-text { color: #FF6B6B; font-size: 1rem; }
-          .btn-primary { background: linear-gradient(135deg, #7B5CF5, #5B3CC5); border: none; border-radius: 10px; padding: 0.75rem 1.5rem; color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.3s; box-shadow: 0 4px 15px rgba(123, 92, 245, 0.3); }
-          .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(123, 92, 245, 0.4); }
+          .error-text { color: #FB7185; font-size: 1rem; }
+          .btn-primary { background: linear-gradient(135deg, #A78BFA, #FF6B9D); border: none; border-radius: 100px; padding: 0.75rem 1.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.3s; box-shadow: 0 4px 16px rgba(167, 139, 250, 0.3); }
+          .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(255, 107, 157, 0.4); }
+          .er-bg { position: fixed; inset: 0; z-index: 0; background: #FEFCF9; pointer-events: none; }
+          .error-container { position: relative; z-index: 1; }
         `}</style>
+        <div className="er-bg" aria-hidden="true" />
         <div className="error-container">
           <p className="error-text">{errorMsg}</p>
           <Link to="/modules" className="btn-primary">Back to Curriculum</Link>
@@ -140,103 +161,81 @@ const ModuleDetail = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #04040C; color: #F0EFF8; min-height: 100vh; }
-        
-        .floating-particles {
+
+        body { font-family: 'Inter', sans-serif; background: #FEFCF9; color: #1A1625; min-height: 100vh; }
+
+        /* ── Ambient gradient-mesh background (same technique as LandingPage/Dashboard) ── */
+        .mesh-bg {
           position: fixed;
           inset: 0;
-          pointer-events: none;
           z-index: 0;
+          pointer-events: none;
           overflow: hidden;
+          background: #FEFCF9;
         }
 
-        .particle {
+        .mesh-blob {
           position: absolute;
-          width: 4px;
-          height: 4px;
-          background: rgba(123, 92, 245, 0.3);
-          border-radius: 50%;
-          animation: floatParticle 15s infinite linear;
+          filter: blur(80px);
+          opacity: 0.45;
+          animation: blobMorph 22s ease-in-out infinite;
         }
 
-        .particle:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; animation-duration: 18s; }
-        .particle:nth-child(2) { left: 20%; top: 60%; animation-delay: 2s; animation-duration: 20s; }
-        .particle:nth-child(3) { left: 30%; top: 40%; animation-delay: 4s; animation-duration: 22s; }
-        .particle:nth-child(4) { left: 40%; top: 80%; animation-delay: 6s; animation-duration: 16s; }
-        .particle:nth-child(5) { left: 50%; top: 10%; animation-delay: 8s; animation-duration: 24s; }
-        .particle:nth-child(6) { left: 60%; top: 70%; animation-delay: 10s; animation-duration: 19s; }
-        .particle:nth-child(7) { left: 70%; top: 30%; animation-delay: 12s; animation-duration: 21s; }
-        .particle:nth-child(8) { left: 80%; top: 50%; animation-delay: 14s; animation-duration: 17s; }
-        .particle:nth-child(9) { left: 90%; top: 90%; animation-delay: 16s; animation-duration: 23s; }
-        .particle:nth-child(10) { left: 15%; top: 85%; animation-delay: 18s; animation-duration: 25s; }
-        .particle:nth-child(11) { left: 25%; top: 15%; animation-delay: 20s; animation-duration: 20s; background: rgba(245, 166, 35, 0.2); }
-        .particle:nth-child(12) { left: 35%; top: 55%; animation-delay: 22s; animation-duration: 18s; background: rgba(245, 166, 35, 0.2); }
-        .particle:nth-child(13) { left: 45%; top: 25%; animation-delay: 24s; animation-duration: 22s; background: rgba(245, 166, 35, 0.2); }
-        .particle:nth-child(14) { left: 55%; top: 75%; animation-delay: 26s; animation-duration: 19s; background: rgba(245, 166, 35, 0.2); }
-        .particle:nth-child(15) { left: 65%; top: 45%; animation-delay: 28s; animation-duration: 21s; background: rgba(245, 166, 35, 0.2); }
+        .blob-1 { width: 560px; height: 560px; background: linear-gradient(135deg, rgba(167,139,250,.35), rgba(255,107,157,.25)); top: -12%; left: -8%; animation-delay: 0s; }
+        .blob-2 { width: 480px; height: 480px; background: linear-gradient(135deg, rgba(110,231,183,.28), rgba(125,211,252,.25)); top: 35%; right: -12%; animation-delay: -6s; }
+        .blob-3 { width: 420px; height: 420px; background: linear-gradient(135deg, rgba(251,191,36,.25), rgba(251,113,133,.2)); bottom: -8%; left: 25%; animation-delay: -11s; }
 
-        @keyframes floatParticle {
-          0% {
-            transform: translateY(100vh) translateX(0) scale(0);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-            transform: translateY(80vh) translateX(20px) scale(1);
-          }
-          90% {
-            opacity: 1;
-            transform: translateY(10vh) translateX(-20px) scale(1);
-          }
-          100% {
-            transform: translateY(-10vh) translateX(0) scale(0);
-            opacity: 0;
-          }
+        @keyframes blobMorph {
+          0%,100% { border-radius: 60% 40% 30% 70%/60% 30% 70% 40%; }
+          25% { border-radius: 30% 60% 70% 40%/50% 60% 30% 60%; }
+          50% { border-radius: 50% 60% 30% 60%/30% 40% 70% 60%; }
+          75% { border-radius: 60% 40% 60% 40%/40% 30% 60% 50%; }
         }
 
         .module-container {
+          position: relative;
+          z-index: 2;
           max-width: 1000px;
           margin: 0 auto;
           padding: 2rem;
           animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
-        
+
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        
+
         .back-link {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
-          color: #8B8AA8;
+          color: #8B849B;
           text-decoration: none;
           font-size: 0.9rem;
           font-weight: 600;
           transition: color 0.2s;
           margin-bottom: 1.5rem;
         }
-        
-        .back-link:hover { color: #7B5CF5; }
-        
+
+        .back-link:hover { color: #A78BFA; }
+
         .module-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
           padding-bottom: 1.5rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          border-bottom: 1px solid rgba(167, 139, 250, 0.15);
           margin-bottom: 2rem;
           flex-wrap: wrap;
           gap: 1rem;
         }
-        
+
         .module-info { flex: 1; }
-        
+
         .module-meta {
           display: flex;
           align-items: center;
@@ -244,69 +243,75 @@ const ModuleDetail = () => {
           margin-bottom: 0.75rem;
           flex-wrap: wrap;
         }
-        
+
         .track-badge {
           font-size: 0.85rem;
-          color: #7B5CF5;
+          color: #7C3AED;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
-        
+
         .price-badge {
           font-size: 0.85rem;
           font-weight: 700;
-          color: #F5A623;
-          background: rgba(245, 166, 35, 0.15);
+          color: #D97706;
+          background: rgba(251, 191, 36, 0.15);
+          border: 1px solid rgba(251, 191, 36, 0.28);
           padding: 0.25rem 0.75rem;
           border-radius: 6px;
         }
-        
+
         .region-badge {
           font-size: 0.85rem;
           font-weight: 600;
-          color: #8B8AA8;
-          background: rgba(0, 0, 0, 0.3);
+          color: #8B849B;
+          background: rgba(255, 255, 255, 0.6);
+          border: 1px solid rgba(167, 139, 250, 0.15);
           padding: 0.25rem 0.75rem;
           border-radius: 6px;
         }
-        
+
         .module-title {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Space Grotesk', sans-serif;
           font-size: 2rem;
           font-weight: 700;
+          letter-spacing: -1px;
           margin-bottom: 0.5rem;
+          color: #1A1625;
         }
-        
+
         .module-desc {
           font-size: 0.95rem;
-          color: #8B8AA8;
+          color: #8B849B;
           line-height: 1.6;
         }
-        
+
         .status-badge {
           padding: 0.5rem 1rem;
-          border-radius: 8px;
+          border-radius: 100px;
           font-size: 0.875rem;
           font-weight: 600;
           display: inline-flex;
           align-items: center;
           gap: 0.25rem;
         }
-        
+
         .status-badge.completed {
-          background: rgba(6, 214, 160, 0.15);
-          border: 1px solid rgba(6, 214, 160, 0.3);
-          color: #06D6A0;
+          background: rgba(110, 231, 183, 0.15);
+          border: 1px solid rgba(110, 231, 183, 0.32);
+          color: #059669;
         }
-        
+
         .status-badge.in-progress {
-          background: rgba(123, 92, 245, 0.15);
-          border: 1px solid rgba(123, 92, 245, 0.3);
-          color: #9D7DFF;
+          background: rgba(167, 139, 250, 0.12);
+          border: 1px solid rgba(167, 139, 250, 0.3);
+          color: #7C3AED;
         }
-        
+
         .alert {
+          position: relative;
+          z-index: 2;
           padding: 1rem 1.25rem;
           border-radius: 12px;
           font-size: 0.875rem;
@@ -316,56 +321,60 @@ const ModuleDetail = () => {
           align-items: center;
           gap: 0.5rem;
         }
-        
+
         @keyframes slideDown {
           from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        
+
         .alert-success {
-          background: rgba(6, 214, 160, 0.1);
-          border: 1px solid rgba(6, 214, 160, 0.3);
-          color: #06D6A0;
+          background: rgba(110, 231, 183, 0.12);
+          border: 1px solid rgba(110, 231, 183, 0.3);
+          color: #059669;
         }
-        
+
         .alert-error {
-          background: rgba(255, 107, 107, 0.1);
-          border: 1px solid rgba(255, 107, 107, 0.3);
-          color: #FF6B6B;
+          background: rgba(251, 113, 133, 0.1);
+          border: 1px solid rgba(251, 113, 133, 0.3);
+          color: #E11D48;
         }
-        
+
         .card {
-          background: rgba(255, 255, 255, 0.03);
+          background: rgba(255, 255, 255, 0.7);
           backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.5);
           border-radius: 20px;
           padding: 2rem;
           margin-bottom: 2rem;
+          box-shadow: 0 8px 24px rgba(167, 139, 250, 0.1);
           transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          position: relative;
+          z-index: 2;
         }
-        
+
         .card:hover {
-          border-color: rgba(123, 92, 245, 0.3);
+          border-color: rgba(167, 139, 250, 0.32);
           transform: translateY(-4px);
-          box-shadow: 0 20px 40px rgba(123, 92, 245, 0.1);
+          box-shadow: 0 20px 44px rgba(167, 139, 250, 0.16);
         }
-        
+
         .video-placeholder {
-          background: rgba(0, 0, 0, 0.3);
+          background: rgba(255, 255, 255, 0.55);
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           padding: 3rem 2rem;
           border-radius: 20px;
-          border: 1px dashed rgba(255, 255, 255, 0.15);
+          border: 1px dashed rgba(167, 139, 250, 0.3);
           gap: 1rem;
           position: relative;
         }
-        
+
         .video-icon {
-          background: rgba(123, 92, 245, 0.15);
-          color: #7B5CF5;
+          background: linear-gradient(135deg, rgba(167,139,250,.18), rgba(255,107,157,.1));
+          border: 1px solid rgba(167, 139, 250, 0.25);
+          color: #7C3AED;
           width: 56px;
           height: 56px;
           border-radius: 50%;
@@ -373,126 +382,128 @@ const ModuleDetail = () => {
           align-items: center;
           justify-content: center;
         }
-        
+
         .video-content { text-align: center; }
-        
+
         .video-content h4 {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Space Grotesk', sans-serif;
           font-size: 1.1rem;
           font-weight: 600;
           margin-bottom: 0.25rem;
+          color: #1A1625;
         }
-        
+
         .video-content p {
           font-size: 0.85rem;
-          color: #8B8AA8;
+          color: #8B849B;
         }
-        
+
         .section-header {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Space Grotesk', sans-serif;
           font-size: 1.25rem;
           font-weight: 700;
           padding-bottom: 1rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          border-bottom: 1px solid rgba(167, 139, 250, 0.15);
           margin-bottom: 1.5rem;
+          color: #1A1625;
         }
-        
+
         .content-section {
           display: flex;
           flex-direction: column;
           gap: 1.25rem;
         }
-        
+
         .content-section h4 {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Space Grotesk', sans-serif;
           font-size: 1.1rem;
           font-weight: 600;
-          color: #F0EFF8;
+          color: #1A1625;
           margin-top: 0.5rem;
         }
-        
+
         .content-section p {
           font-size: 0.95rem;
-          color: #8B8AA8;
+          color: #4A4458;
           line-height: 1.6;
         }
-        
+
         .content-section .bullet {
           padding-left: 1rem;
           position: relative;
         }
-        
+
         .deliverable-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding-bottom: 1rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          border-bottom: 1px solid rgba(167, 139, 250, 0.15);
         }
-        
+
         .workspace-badge {
-          background: linear-gradient(135deg, #F5A623, #FFD166);
-          color: #04040C;
+          background: linear-gradient(135deg, #FBBF24, #FFD166);
+          color: #3A2400;
           padding: 0.35rem 0.85rem;
-          border-radius: 8px;
+          border-radius: 100px;
           font-size: 0.75rem;
-          font-weight: 600;
+          font-weight: 700;
           display: inline-flex;
           align-items: center;
           gap: 0.25rem;
         }
-        
+
         .form-group { margin-bottom: 1.5rem; }
-        
+
         .form-label {
           display: block;
           font-size: 0.875rem;
           font-weight: 600;
-          color: #F0EFF8;
+          color: #1A1625;
           margin-bottom: 0.5rem;
         }
-        
+
         .form-textarea {
           width: 100%;
           padding: 1rem;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.7);
+          border: 1px solid rgba(167, 139, 250, 0.2);
           border-radius: 12px;
-          color: #F0EFF8;
-          font-family: 'Plus Jakarta Sans', sans-serif;
+          color: #1A1625;
+          font-family: 'Inter', sans-serif;
           font-size: 0.95rem;
           min-height: 90px;
           resize: vertical;
           line-height: 1.6;
           transition: all 0.3s;
         }
-        
+
         .form-textarea::placeholder {
-          color: #5A5872;
+          color: #B6B1C9;
         }
-        
+
         .form-textarea:focus {
           outline: none;
-          border-color: #7B5CF5;
-          background: rgba(123, 92, 245, 0.08);
-          box-shadow: 0 0 0 4px rgba(123, 92, 245, 0.1);
+          border-color: #A78BFA;
+          background: #fff;
+          box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.12);
         }
-        
+
         .form-actions {
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding-top: 1.5rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          border-top: 1px solid rgba(167, 139, 250, 0.15);
           margin-top: 0.5rem;
         }
-        
+
         .btn {
           padding: 0.75rem 1.5rem;
-          border-radius: 10px;
-          font-family: 'Outfit', sans-serif;
+          border-radius: 100px;
+          font-family: 'Space Grotesk', sans-serif;
           font-size: 0.9rem;
-          font-weight: 600;
+          font-weight: 700;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
@@ -500,48 +511,49 @@ const ModuleDetail = () => {
           transition: all 0.3s;
           text-decoration: none;
         }
-        
+
         .btn-primary {
-          background: linear-gradient(135deg, #7B5CF5, #5B3CC5);
+          background: linear-gradient(135deg, #A78BFA, #FF6B9D);
           border: none;
           color: #fff;
-          box-shadow: 0 4px 15px rgba(123, 92, 245, 0.3);
+          box-shadow: 0 4px 16px rgba(167, 139, 250, 0.3);
         }
-        
+
         .btn-primary:hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(123, 92, 245, 0.4);
+          box-shadow: 0 8px 22px rgba(255, 107, 157, 0.4);
         }
-        
+
         .btn-primary:disabled {
           opacity: 0.6;
           cursor: not-allowed;
           transform: none;
         }
-        
+
         .btn-secondary {
-          background: linear-gradient(135deg, #F5A623, #FFD166);
+          background: linear-gradient(135deg, #FBBF24, #FF9F43);
           border: none;
-          color: #04040C;
-          box-shadow: 0 4px 15px rgba(245, 166, 35, 0.3);
+          color: #3A2400;
+          box-shadow: 0 4px 14px rgba(251, 191, 36, 0.3);
         }
-        
+
         .btn-secondary:hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(245, 166, 35, 0.4);
+          box-shadow: 0 8px 20px rgba(251, 191, 36, 0.4);
         }
-        
+
         .btn-outline {
-          background: transparent;
-          border: 1px solid rgba(123, 92, 245, 0.4);
-          color: #9D7DFF;
+          background: rgba(255, 255, 255, 0.6);
+          border: 2px solid rgba(167, 139, 250, 0.3);
+          color: #4A4458;
         }
-        
+
         .btn-outline:hover {
-          background: rgba(123, 92, 245, 0.1);
-          border-color: #7B5CF5;
+          background: rgba(167, 139, 250, 0.08);
+          border-color: #A78BFA;
+          color: #7C3AED;
         }
-        
+
         @media (max-width: 768px) {
           .module-container { padding: 1.5rem; }
           .module-header { flex-direction: column; }
@@ -550,13 +562,13 @@ const ModuleDetail = () => {
           .btn { width: 100%; justify-content: center; }
         }
       `}</style>
-      
-      <div className="floating-particles">
-        {[...Array(15)].map((_, i) => (
-          <div key={i} className="particle" />
-        ))}
+
+      <div className="mesh-bg" aria-hidden="true">
+        <div className="mesh-blob blob-1" />
+        <div className="mesh-blob blob-2" />
+        <div className="mesh-blob blob-3" />
       </div>
-      
+
       <div className="module-container">
         {/* Back link */}
         <Link to="/modules" className="back-link">
@@ -580,7 +592,7 @@ const ModuleDetail = () => {
               <p className="module-desc">{moduleData.description}</p>
             )}
           </div>
-          
+
           <div>
             {moduleData.status === 'completed' ? (
               <span className="status-badge completed">
@@ -623,7 +635,7 @@ const ModuleDetail = () => {
         {/* Lesson Content Sections */}
         <div className="card">
           <h3 className="section-header">Lessons & Study Notes</h3>
-          
+
           <div className="content-section">
             {moduleData.content?.sections?.map((sect, idx) => {
               if (sect.type === 'header') {
@@ -653,7 +665,7 @@ const ModuleDetail = () => {
               <Sparkles size={12} /> Regional Workspace
             </span>
           </div>
-          <p style={{ fontSize: '0.9rem', color: '#8B8AA8', marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.9rem', color: '#8B849B', marginBottom: '1.5rem' }}>
             Complete the following structured fields to build your startup brief. These answers will be reviewed by the AI Pitch Coach and exported to your finalized Word & PDF documents.
           </p>
 

@@ -6,175 +6,270 @@ import auth from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Mock response generation if Anthropic API key is missing
-function generateMockAIResponse(userIdea, category, messages) {
-  const lastUserMessage = messages[messages.length - 1].content.toLowerCase();
-  
-  if (lastUserMessage.includes('report') || lastUserMessage.includes('feedback') || lastUserMessage.includes('evaluate') || lastUserMessage.includes('score')) {
-    return `Here is your comprehensive Feedback Report. I have assessed your startup idea: "${userIdea}" in the category of "${category}".
+function buildSystemPrompt(user) {
+  return `
+You are a brutally honest YC partner and Series A investor reviewing startup pitches.
+
+FOUNDER PROFILE:
+- Idea: "${user.startupIdea || 'Not yet described'}"
+- Category: "${user.category || 'Not specified'}"
+- Region: "${user.region || 'Not specified'}"
+
+═══════════════════════════════════════════
+MANDATORY BEHAVIOR — NEVER VIOLATE THESE
+═══════════════════════════════════════════
+
+STEP 1 — Before writing anything, silently classify the user's message:
+  (A) WEAKNESS_ANALYSIS   — asks about weaknesses, gaps, blind spots, problems
+  (B) INVESTOR_REACTION   — asks how VCs/investors would react or think
+  (C) DIRECT_QUESTION     — any specific question about market, model, risks, competition
+  (D) IMPROVEMENT         — asks how to improve or what to do next
+  (E) REPORT_REQUEST      — asks for report, score, evaluation, feedback
+  (F) PITCH_DESCRIPTION   — describing their startup idea
+  (G) TOO_VAGUE           — cannot answer without one specific missing piece
+
+STEP 2 — Apply the rule for that class. No exceptions.
+
+━━━━━━━━━━━━━━━━━━━
+CLASS A: WEAKNESS_ANALYSIS
+━━━━━━━━━━━━━━━━━━━
+When the user asks about weaknesses, gaps, or blind spots:
+→ List 4–6 specific weaknesses based ONLY on what has been shared in this conversation.
+→ If little has been shared, say so and list what is missing as the weakness.
+→ Format each weakness as: [Name] — [why it matters] — [how to fix it]
+→ End with one prioritized next action.
+→ DO NOT ask a follow-up question.
+→ DO NOT say "that's interesting" or any filler.
+
+EXAMPLE OF CORRECT RESPONSE FOR CLASS A:
+User: "What are my biggest weaknesses in this pitch so far?"
+Assistant: "Based on what you've shared, here are your critical weaknesses:
+
+1. No traction — You haven't mentioned users, pilots, revenue, or a waitlist. This is the #1 thing investors look for. Fix: Get 10 paying customers or a signed LOI before pitching.
+
+2. Unclear differentiation — It's not obvious why customers would choose you over existing solutions. Fix: Define your 10x advantage in one sentence.
+
+3. Missing acquisition strategy — You've described what you're building but not how you'll get your first 1,000 customers. Fix: Name your channel and estimated CAC.
+
+4. No competitive moat — Nothing stops a funded competitor from copying this. Fix: Identify defensibility — data moats, switching costs, network effects, or proprietary tech.
+
+5. Team credibility not established — You haven't explained why your team wins this market. Fix: Lead with relevant domain expertise or prior experience.
+
+Priority action: Get traction first. It changes every other conversation."
+
+━━━━━━━━━━━━━━━━━━━
+CLASS B: INVESTOR_REACTION
+━━━━━━━━━━━━━━━━━━━
+When the user asks how investors would react:
+→ Simulate a real Series A meeting. Use this exact structure:
+
+**First impression:** [2 honest sentences]
+
+**What I like:**
+- [specific strength from what they shared]
+- [specific strength from what they shared]
+
+**What concerns me:**
+- [specific concern + why it matters]
+- [specific concern + why it matters]
+
+**Questions I'd ask in the room:**
+1. [hard question]
+2. [hard question]
+3. [hard question]
+
+**Would I invest?** [Yes / No / Not yet] — [exact reason]
+
+**Investor Confidence Score: X/10**
+
+━━━━━━━━━━━━━━━━━━━
+CLASS C: DIRECT_QUESTION
+━━━━━━━━━━━━━━━━━━━
+→ Answer the question directly and completely.
+→ No filler before the answer.
+→ Use bullet points or numbered lists for clarity.
+→ You may ask ONE follow-up question at the end only if it would meaningfully improve your next answer.
+
+━━━━━━━━━━━━━━━━━━━
+CLASS D: IMPROVEMENT
+━━━━━━━━━━━━━━━━━━━
+→ Give 3–5 concrete, prioritized improvements.
+→ Each: what to do + why it matters + how to measure success.
+
+━━━━━━━━━━━━━━━━━━━
+CLASS E: REPORT_REQUEST
+━━━━━━━━━━━━━━━━━━━
+→ Write a full 6–8 paragraph investor-style analysis.
+→ Cover: problem clarity, solution, market, business model, competition, team, traction, risks.
+→ Immediately follow with this block (no text after it):
 
 <feedback_report>
 {
   "scores": {
-    "clarity": 8,
-    "marketUnderstanding": 7,
-    "valueProposition": 8,
-    "storytelling": 7,
-    "overall": 8
+    "clarity": <1-10>,
+    "marketUnderstanding": <1-10>,
+    "valueProposition": <1-10>,
+    "storytelling": <1-10>,
+    "overall": <1-10>
   },
-  "keyStrength": "Strong identification of a paint-point problem and a clear initial description of the core solution.",
-  "criticalGap": "Lack of detailed customer acquisition plans and detailed unit economics showing path to profitability.",
-  "actionItems": [
-    "Conduct interviews with at least 15 potential target customers to validate the severity of the problem.",
-    "Formulate a detailed pricing strategy and calculate Customer Acquisition Cost (CAC) vs Lifetime Value (LTV).",
-    "Refine the elevator pitch to focus heavily on the unique unfair advantage."
-  ]
+  "keyStrength": "<most compelling thing>",
+  "criticalGap": "<single most important gap>",
+  "actionItems": ["<action 1>", "<action 2>", "<action 3>"]
 }
 </feedback_report>
 
-I hope this structured feedback helps you refine your pitch! What specific part of this report would you like to discuss or improve first?`;
-  }
+Valid JSON only. No markdown. No code fences. Directly JSON.parse()-able.
 
-  // Simple conversation response
-  const responses = [
-    `That is an interesting angle for your ${category} startup. Who do you see as your ideal first customer? How do they solve this problem today?`,
-    `Fascinating. How severe is this pain point for them? Do they currently pay for alternative solutions, and if so, how much?`,
-    `Let's talk about scalability. What is your primary channel for acquiring these customers, and how do you plan to keep customer acquisition costs low?`,
-    `Understood. Pitching this to investors will require a very clear value proposition. If you had to explain the core value in one sentence, what would it be?`,
-    `That's a solid start. Whenever you feel ready, you can ask me to generate your Feedback Report to get a breakdown of your scores!`
-  ];
+━━━━━━━━━━━━━━━━━━━
+CLASS F: PITCH_DESCRIPTION
+━━━━━━━━━━━━━━━━━━━
+→ Acknowledge in ONE sentence (no praise, no filler).
+→ Ask the single most important missing question.
+→ Maximum one question.
 
-  // Pick response based on conversation length
-  const index = Math.floor(messages.length / 2) % responses.length;
-  return responses[index];
+━━━━━━━━━━━━━━━━━━━
+CLASS G: TOO_VAGUE
+━━━━━━━━━━━━━━━━━━━
+→ Ask exactly ONE clarifying question.
+
+═══════════════════════
+ABSOLUTELY FORBIDDEN
+═══════════════════════
+Never produce any of these under any circumstances:
+✗ "That's an interesting angle..."
+✗ "That is an interesting angle..."
+✗ "Fascinating..."
+✗ "That's a solid start..."
+✗ "Great question!"
+✗ "Let's talk about..."
+✗ "Whenever you're ready..."
+✗ "Who do you see as your ideal first customer?" (unless class G and this is genuinely missing)
+✗ "How do they solve this problem today?" as a deflection instead of answering
+
+If you catch yourself about to write any of the above — stop, delete it, and answer the actual question instead.
+`.trim();
 }
 
-// GET history of conversations for user
-router.get('/history', auth, async (req, res) => {
+// ── Clear session (debug helper) ──────────────────────────────────────────────
+router.delete('/clear', auth, async (req, res) => {
   try {
-    let session = await PitchSession.findOne({ userId: req.user.id });
-    if (!session) {
-      // Create an initial empty session
-      session = await PitchSession.create({
-        userId: req.user.id,
-        messages: []
-      });
-    }
-    res.json(session);
+    await PitchSession.deleteOne({ userId: req.user.id });
+    res.json({ message: 'Session cleared successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// POST send message
+// ── GET history ───────────────────────────────────────────────────────────────
+router.get('/history', auth, async (req, res) => {
+  console.log('[PitchCoach] GET /history — userId:', req.user?.id);
+  try {
+    let session = await PitchSession.findOne({ userId: req.user.id });
+    if (!session) {
+      session = await PitchSession.create({ userId: req.user.id, messages: [] });
+    }
+    res.json(session);
+  } catch (error) {
+    console.error('[PitchCoach] /history error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ── POST message ──────────────────────────────────────────────────────────────
 router.post('/message', auth, async (req, res) => {
+  console.log('[PitchCoach] POST /message — userId:', req.user?.id);
+
   try {
     const { message } = req.body;
-    if (!message) {
-      return res.status(400).json({ message: 'Message is required' });
+    if (!message) return res.status(400).json({ message: 'Message is required' });
+
+    if (!req.user?.id) {
+      return res.status(401).json({ message: 'Authentication error: user not resolved' });
     }
 
     const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Find or create session
     let session = await PitchSession.findOne({ userId: user._id });
-    if (!session) {
-      session = new PitchSession({ userId: user._id, messages: [] });
+    if (!session) session = new PitchSession({ userId: user._id, messages: [] });
+
+    // ── KEY FIX: build apiMessages from EXISTING history only,
+    //    then append the new user message as the final turn.
+    //    Previously the new message was pushed to session.messages first,
+    //    then the entire array was sent — causing the current question to
+    //    appear mid-history, making Claude treat it as already answered.
+    const historyMessages = session.messages.map(msg => ({
+      role:    msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.content,
+    }));
+
+    const apiMessages = [
+      ...historyMessages,
+      { role: 'user', content: message }, // current question always last
+    ];
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey || apiKey === 'placeholder_claude_api_key') {
+      console.error('[PitchCoach] ❌ Missing ANTHROPIC_API_KEY');
+      return res.status(500).json({ message: 'Server misconfiguration: ANTHROPIC_API_KEY is not set.' });
     }
 
-    // Append user message
-    session.messages.push({ role: 'user', content: message });
+    console.log('[PitchCoach] Calling Claude. History turns:', historyMessages.length);
 
-    // Build the system prompt
-    const systemPrompt = `You are an expert startup investor pitch coach. The user is an entrepreneur.
-Ask probing questions to understand their business, challenge weak assumptions, help them sharpen their pitch. Be direct but constructive.
-After enough context, or when the user explicitly asks for feedback, scores, or a report, generate a Feedback Report.
+    const anthropic = new Anthropic({ apiKey });
+    let claudeResponse;
 
-USER PROFILE CONTEXT:
-- Startup Idea: "${user.startupIdea || 'Not described yet'}"
-- Category: "${user.category || 'Not specified'}"
-- Region: "${user.region}"
-
-CRITICAL INSTRUCTION FOR FEEDBACK REPORT:
-When you generate the Feedback Report, you MUST wrap a structured JSON object inside a <feedback_report> tag like this:
-<feedback_report>
-{
-  "scores": {
-    "clarity": 8,
-    "marketUnderstanding": 7,
-    "valueProposition": 9,
-    "storytelling": 6,
-    "overall": 8
-  },
-  "keyStrength": "Describe the main strength here.",
-  "criticalGap": "Describe the main gap here.",
-  "actionItems": [
-    "Action item 1",
-    "Action item 2",
-    "Action item 3"
-  ]
-}
-</feedback_report>
-Only output the JSON inside this block. Do not include markdown inside the <feedback_report> tags. Outside the tags, you can write natural friendly follow-up or introductory remarks.`;
-
-    let assistantContent = '';
-
-    // Check if Claude API key is set
-    if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'placeholder_claude_api_key') {
-      try {
-        const anthropic = new Anthropic({
-          apiKey: process.env.ANTHROPIC_API_KEY
-        });
-
-        // Format history for Anthropic API
-        const apiMessages = session.messages.map(msg => ({
-          role: msg.role === 'user' ? 'user' : 'assistant',
-          content: msg.content
-        }));
-
-        const response = await anthropic.messages.create({
-          model: 'claude-3-5-sonnet-20241022', // Standard Claude 3.5 Sonnet
-          max_tokens: 1500,
-          system: systemPrompt,
-          messages: apiMessages
-        });
-
-        assistantContent = response.content[0].text;
-      } catch (apiError) {
-        console.error('Claude API Error, falling back to Mock:', apiError);
-        assistantContent = generateMockAIResponse(user.startupIdea, user.category, session.messages);
-      }
-    } else {
-      // Fallback to Mock AI
-      assistantContent = generateMockAIResponse(user.startupIdea, user.category, session.messages);
+    try {
+      claudeResponse = await anthropic.messages.create({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 2500,
+        system:     buildSystemPrompt(user),
+        messages:   apiMessages,
+      });
+    } catch (apiError) {
+      console.error('[PitchCoach] ❌ Claude API error:', apiError.status, apiError.message);
+      return res.status(502).json({
+        message: `Claude API error (${apiError.status}): ${apiError.message}`,
+      });
     }
 
-    // Check if there is a feedback report in the response
-    const reportMatch = assistantContent.match(/<feedback_report>([\s\S]*?)<\/feedback_report>/);
+    console.log('[PitchCoach] ✅ Claude responded. stop_reason:', claudeResponse.stop_reason);
+
+    const assistantContent = claudeResponse.content
+      ?.filter(c => c.type === 'text')
+      .map(c => c.text)
+      .join('\n') || 'Sorry, I could not generate a response.';
+
+    // Log first 200 chars so you can verify the response quality in terminal
+    console.log('[PitchCoach] Response preview:', assistantContent.substring(0, 200));
+
+    // ── Parse feedback report if present ─────────────────────────────────────
+    const reportMatch  = assistantContent.match(/<feedback_report>([\s\S]*?)<\/feedback_report>/);
     let parsedFeedback = null;
 
     if (reportMatch) {
       try {
-        parsedFeedback = JSON.parse(reportMatch[1].trim());
+        parsedFeedback         = JSON.parse(reportMatch[1].trim());
         session.feedbackReport = parsedFeedback;
+        console.log('[PitchCoach] Report parsed. Overall:', parsedFeedback.scores?.overall);
       } catch (parseError) {
-        console.error('Failed to parse feedback report JSON:', parseError, reportMatch[1]);
+        console.error('[PitchCoach] Failed to parse feedback_report JSON:', parseError.message);
       }
     }
 
-    // Save assistant message to history
+    // Save both turns to DB after Claude responds successfully
+    session.messages.push({ role: 'user',      content: message });
     session.messages.push({ role: 'assistant', content: assistantContent });
     await session.save();
 
     res.json({
-      reply: assistantContent,
-      feedbackReport: session.feedbackReport,
-      session
+      reply:          assistantContent,
+      feedbackReport: session.feedbackReport || null,
+      session,
     });
+
   } catch (error) {
+    console.error('[PitchCoach] Unexpected error:', error);
     res.status(500).json({ message: error.message });
   }
 });
